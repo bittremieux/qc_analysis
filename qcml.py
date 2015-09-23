@@ -654,7 +654,7 @@ class qcMLType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<?xml-stylesheet type="text/xml" href="ss.xsl"?>%s' % (eol_, ))
+        outfile.write('<?xml-stylesheet type="text/xml" href="outlier_html.xsl"?>%s' % (eol_, ))
         outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='qcMLType')

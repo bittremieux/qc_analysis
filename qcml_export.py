@@ -30,7 +30,7 @@ class QcmlExport:
         self.set_quality.add_qualityParameter(param_var)
 
         values = [' '.join((v[0], '{:.3e}'.format(v[1]))) for v in variances[variances <= min_var].iteritems()]
-        table = qcml.TableType(tableColumnTypes=['Metric', 'Variance'], tableRowValues=values)
+        table = qcml.TableType(tableColumnTypes=['RemovedMetric', 'Variance'], tableRowValues=values)
         self.set_quality.add_attachment(qcml.AttachmentType(name='Low variance metrics', ID='var', table=table, qualityParameterRef=param_var.get_ID()))
 
     def add_correlation(self, corr, min_corr):
@@ -45,7 +45,7 @@ class QcmlExport:
                     if corr.columns.values[col] not in corr_features and abs(corr.iloc[row, col]) > min_corr:
                         corr_features.add(corr.columns.values[col])
                         values.append(' '.join((corr.columns.values[row], corr.columns.values[col], '{:.2%}'.format(corr.iloc[row, col]))))
-        table = qcml.TableType(tableColumnTypes=['Metric', 'Metric', 'Correlation'], tableRowValues=values)
+        table = qcml.TableType(tableColumnTypes=['RetainedMetric', 'RemovedMetric', 'Correlation'], tableRowValues=values)
         self.set_quality.add_attachment(qcml.AttachmentType(name='Correlated metrics', ID='corr', table=table, qualityParameterRef=param_corr.get_ID()))
 
     def add_visualization(self, data):
@@ -84,7 +84,7 @@ class QcmlExport:
         run_quality.add_attachment(qcml.AttachmentType(name='Feature importance', binary=fig_features,
                                    ID='{}_FeatureImportance'.format(run_quality.get_ID()),
                                    qualityParameterRef=score.get_ID()))
-        run_quality.add_attachment(qcml.AttachmentType(name='Outlier subspace', binary=fig_subspace,
+        run_quality.add_attachment(qcml.AttachmentType(name='Explanatory subspace', binary=fig_subspace,
                                                        ID='{}_Subspace'.format(run_quality.get_ID()),
                                                        qualityParameterRef=score.get_ID()))
 
