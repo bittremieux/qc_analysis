@@ -1,22 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-#
-# Generated Mon Sep 21 10:00:21 2015 by generateDS.py version 2.17a.
-#
-# Command line options:
-#   ('-o', 'qcml.py')
-#
-# Command line arguments:
-#   qcML_0.0.8.xsd
-#
-# Command line:
-#   /usr/local/bin/generateDS.py -o "qcml.py" qcML_0.0.8.xsd
-#
-# Current working directory (os.getcwd()):
-#   QC mining
-#
-
 import sys
 import re as re_
 import base64

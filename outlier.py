@@ -10,6 +10,10 @@ from sklearn.neighbors import NearestNeighbors
 import visualize
 
 
+random.seed()
+
+
+# TODO
 def read_elki_outlier_scores(filename):
     f = open(filename, 'r')
 
@@ -25,46 +29,34 @@ def read_elki_outlier_scores(filename):
     return np.array([scores[i] for i in sorted(scores)])
 
 
-def remove_outliers(df, outlier_scores, outlier_threshold):
+def split_outliers(data, outlier_scores, outlier_threshold):
+    # identify the outliers with a score exceeding the threshold
     outlier_idx = np.where(outlier_scores > outlier_threshold)[0]
+    # select the outliers and add their scores
+    outliers = data.iloc[outlier_idx].reindex()
+    outliers.insert(len(outliers.columns), 'OutlierScore', outlier_scores[outlier_idx])
+    # sort the outliers based on their scores
+    outliers.sort('OutlierScore', ascending=False, inplace=True)
 
-    # retrieve outliers
-    outliers = df.ix[outlier_idx].reindex()
-    outliers.insert(0, 'OutlierScore', outlier_scores[outlier_idx])
+    # remove the outliers from the data
+    data_excluding_outliers = data.drop(data.index[outlier_idx])
 
-    # delete outliers from the data
-    df = df.drop(df.index[outlier_idx])
-
-    return df, outliers
-
-
-def interpret_outlier(data_no_outliers, outlier, filename=None):
-    # print '{} has outlier score {:.2f}%'.format(outlier.name[1], outlier['OutlierScore'] * 100)
-
-    feature_importances = outlier_subspace_explanation(data_no_outliers, outlier, 15)
-
-    fig_features = visualize.visualize_feature_importances(feature_importances, filename=filename)
-
-    subspace = get_relevant_subspace(feature_importances)
-    fig_subspace = visualize.visualize_subspace_boxplots(data_no_outliers[subspace], outlier[subspace], filename=filename)
-
-    return fig_features, fig_subspace
+    return data_excluding_outliers, outliers
 
 
-def get_outlier_subspace(data_all, outlier):
-    feature_importances = outlier_subspace_explanation(data_all, outlier, 15)
+def get_outlier_subspace(data, outlier, k):
+    feature_importances = outlier_subspace_explanation(data, outlier, k)
     subspace = get_relevant_subspace(feature_importances)
 
-    return subspace
+    return feature_importances, subspace
 
 
 def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
-    random.seed()
     knn = NearestNeighbors(n_neighbors=k)
     knn.fit(data.values)
 
     # outlier nearest neighbors
-    outlier_values = outlier.drop('OutlierScore').values
+    outlier_values = outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).values
     k_dist = knn.kneighbors(outlier_values)[0][0][-1]
     ref_set_idx = knn.radius_neighbors(outlier_values, k_dist)[1][0]
 
@@ -83,13 +75,13 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
 
         # determine the relevant features by classifying the inliers versus the outliers
         x = np.vstack([[data.iloc[i] for i in itertools.chain(ref_set_idx, random_inliers_idx)], outliers_sample])
-        y = [0] * (len(ref_set_idx) + len(random_inliers_idx)) + [1] * len(outliers_sample)
+        y = np.concatenate((np.zeros(len(ref_set_idx) + len(random_inliers_idx)), np.ones(len(outliers_sample))))
 
         forest = RandomForestClassifier(n_estimators=100)
         forest.fit(x, y)
         importances = np.add(importances, forest.feature_importances_)
 
-    return pd.Series(importances / repeats, index=outlier.drop('OutlierScore').index)
+    return pd.Series(importances / repeats, index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
 
 
 def get_relevant_subspace(feature_importances):
@@ -97,17 +89,18 @@ def get_relevant_subspace(feature_importances):
 
     subspace = []
     explained_importance = 0
-    max_importance = feature_importances[0]
+    min_importance = feature_importances[0] * 2 / 3
     for i in range(len(feature_importances)):
         subspace.append(feature_importances.index.values[i])
 
         explained_importance += feature_importances[i]
-        if explained_importance > 0.5 or max_importance * 0.6 > feature_importances[i + 1]:
+        if explained_importance > 0.5 or i < len(feature_importances) - 1 and feature_importances[i + 1] < min_importance:
             break
 
-    return subspace
+    return np.array(subspace, dtype=object)
 
 
+# TODO
 def get_inlier_outlier_nr_psms(filename, inlier_names):
     conn = sqlite3.connect(filename)
 
@@ -123,6 +116,7 @@ def get_inlier_outlier_nr_psms(filename, inlier_names):
     return pd.Series(inlier_psms), pd.Series(outlier_psms)
 
 
+# TODO
 def get_nr_psms(filename):
     conn = sqlite3.connect(filename)
 
@@ -133,4 +127,3 @@ def get_nr_psms(filename):
         psms[result[0]] = result[1]
 
     return pd.Series(psms)
-

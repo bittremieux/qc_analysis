@@ -20,7 +20,7 @@ def output_figure(filename):
 
     if filename is None:
         plt.show()
-    elif filename == 'raw':
+    elif filename == '__qcml_export__':
         binary = StringIO.StringIO()
         plt.savefig(binary, format='svg')
         binary.seek(0)  # rewind the data
@@ -57,13 +57,13 @@ def classes_to_colors(df):
 
     class_colors = {}
     color_idx = 0
-    for c, _, _ in df.index.values:
+    for c, _ in df.index.values:
         if class_colors.get(c) is None:
             class_colors[c] = cmap[color_idx]
             color_idx += 1
 
     colors = []
-    for c, _, _ in df.index.values:
+    for c, _ in df.index.values:
         colors.append(class_colors[c])
 
     return colors
@@ -72,7 +72,7 @@ def classes_to_colors(df):
 def visualize_timestamps(df, filename=None):
     plt.figure()
 
-    plt.scatter(df.index.get_level_values(2), [0] * len(df.index.get_level_values(2)), 500, classes_to_colors(df), '|')
+    plt.scatter(df.index.get_level_values(1), [0] * len(df.index.get_level_values(1)), 500, classes_to_colors(df), '|')
 
     sns.despine(left=True)
 
@@ -104,7 +104,7 @@ def add_date_color_bar(df):
     mappable.set_array(range(num_ticks + 2))
 
     cb = plt.colorbar(mappable, ticks=ticker, shrink=0.75)
-    cb.ax.set_yticklabels([df.index.values[i][2].strftime('%b %Y')
+    cb.ax.set_yticklabels([df.index.values[i][1].strftime('%b %Y')
                            for i in range(0, len(df.index.values), len(df.index.values) / (num_ticks + 2))])
     cb.outline.set_linewidth(0)
 
@@ -157,7 +157,7 @@ def plot_outlier_score_hist(outlier_scores, score_cutoff, filename=None):
 
 
 def visualize_subspace_boxplots(data, highlights=None, filename=None):
-    with sns.axes_style("whitegrid"):
+    with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
@@ -173,7 +173,7 @@ def visualize_subspace_boxplots(data, highlights=None, filename=None):
 
 
 def visualize_metric_boxplot(attributes, data, strip=None, filename=None):
-    with sns.axes_style("whitegrid"):
+    with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
@@ -189,7 +189,7 @@ def visualize_boxplot(data, strip=None, title=None, filename=None, **kwargs):
     mpl.rc('text', usetex=True)
     mpl.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 
-    with sns.axes_style("whitegrid"):
+    with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
@@ -207,13 +207,11 @@ def visualize_boxplot(data, strip=None, title=None, filename=None, **kwargs):
 def visualize_feature_importances(feature_importances, filename=None):
     feature_importances.sort(ascending=False)
 
-    with sns.axes_style("whitegrid"):
+    with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
-        plt.title("Feature importance")
-
-        sns.barplot(x=feature_importances.index.values, y=feature_importances, palette="Blues_d")
+        sns.barplot(x=feature_importances.index.values, y=feature_importances, palette='Blues_d')
 
         plt.xticks(rotation='vertical', fontsize=5)
 
