@@ -1,5 +1,6 @@
 import qcml
 import datetime
+import numpy as np
 import pandas as pd
 
 import visualize
@@ -24,6 +25,29 @@ class QcmlExport:
         # add global outlier information in a setQuality
         self.qcml_out.add_setQuality(self.set_quality)
 
+    def add_low_variance(self, variances, min_var):
+        param_var = qcml.QualityParameterType(name='Variance threshold', ID='VarianceThreshold', value='{:.3e}'.format(min_var))
+        self.set_quality.add_qualityParameter(param_var)
+
+        values = [' '.join((v[0], '{:.3e}'.format(v[1]))) for v in variances[variances <= min_var].iteritems()]
+        table = qcml.TableType(tableColumnTypes=['Metric', 'Variance'], tableRowValues=values)
+        self.set_quality.add_attachment(qcml.AttachmentType(name='Low variance metrics', ID='var', table=table, qualityParameterRef=param_var.get_ID()))
+
+    def add_correlation(self, corr, min_corr):
+        param_corr = qcml.QualityParameterType(name='Correlation threshold', ID='CorrelationThreshold', value=min_corr)
+        self.set_quality.add_qualityParameter(param_corr)
+
+        values = []
+        corr_features = set()
+        for row in range(len(corr.index)):
+            if corr.columns.values[row] not in corr_features:
+                for col in range(row + 1, len(corr.columns)):
+                    if corr.columns.values[col] not in corr_features and abs(corr.iloc[row, col]) > min_corr:
+                        corr_features.add(corr.columns.values[col])
+                        values.append(' '.join((corr.columns.values[row], corr.columns.values[col], '{:.2%}'.format(corr.iloc[row, col]))))
+        table = qcml.TableType(tableColumnTypes=['Metric', 'Metric', 'Correlation'], tableRowValues=values)
+        self.set_quality.add_attachment(qcml.AttachmentType(name='Correlated metrics', ID='corr', table=table, qualityParameterRef=param_corr.get_ID()))
+
     def add_visualization(self, data):
         self.set_quality.add_attachment(qcml.AttachmentType(name='Experiment execution time', ID='time',
                                                             binary=visualize.visualize_timestamps(data, filename='__qcml_export__')))
@@ -41,7 +65,7 @@ class QcmlExport:
         self.set_quality.add_attachment(attach_hist)
 
     def add_outlier_runquality(self, outlier, data):
-        run_quality = qcml.RunQualityAssessmentType(ID=outlier.name[1])
+        run_quality = qcml.RunQualityAssessmentType(ID=outlier.name[0])
         self.qcml_out.add_runQuality(run_quality)
 
         run_quality.add_metaDataParameter(qcml.MetaDataType(name='Creation date', value=self.creation_date,

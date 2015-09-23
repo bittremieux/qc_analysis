@@ -18,7 +18,12 @@ def load_metrics(file_in, min_var, min_corr):
     data_raw = preprocess.load_metrics(file_in)
 
     # pre-process: remove low-variance and correlated metrics & scale the values
-    data = preprocess.preprocess(data_raw, min_variance=min_var, min_corr=min_corr)
+    data, variance, corr = preprocess.preprocess(data_raw, min_variance=min_var, min_corr=min_corr)
+
+    # add the preprocessing results to the qcML export
+    # visualize.visualize_correlation_matrix(corr)
+    qcml.add_low_variance(pd.Series(variance, index=data_raw.columns.values), min_var)
+    qcml.add_correlation(corr, min_corr)
 
     # add general visualizations to the qcML export
     qcml.add_visualization(data)
