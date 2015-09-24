@@ -56,12 +56,12 @@ class QcmlExport:
         self.set_quality.add_attachment(qcml.AttachmentType(name='t-SNE visualization', ID='t-SNE',
                                                             binary=visualize.visualize_tsne(data, filename='__qcml_export__')))
 
-    def add_outlier_scores(self, outlier_scores, outlier_threshold):
+    def add_outlier_scores(self, outlier_scores, outlier_threshold, num_bins):
         param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold)
         self.set_quality.add_qualityParameter(param_score)
 
         attach_hist = qcml.AttachmentType(name='Outlier score histogram', ID='OutlierScoreHistogram', qualityParameterRef=param_score.get_ID(),
-                                          binary=visualize.plot_outlier_score_hist(outlier_scores, outlier_threshold, filename='__qcml_export__'))
+                                          binary=visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='__qcml_export__'))
         self.set_quality.add_attachment(attach_hist)
 
     def add_outlier_runquality(self, outlier, data):

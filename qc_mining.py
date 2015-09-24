@@ -35,13 +35,16 @@ def load_metrics(file_in, min_var, min_corr):
 
 # OUTLIER DETECTION
 
-def detect_outliers(data, outlier_threshold, k):
-    # read computed outlier scores
-    # TODO: reimplement LoOP in Python
-    outlier_scores = outlier.read_elki_outlier_scores('loop-outlier_order.txt')
+def detect_outliers(data, k, outlier_threshold=None, num_bins=20):
+    # compute outlier scores
+    outlier_scores = outlier.detect_outliers_loop(data, k, metric='manhattan')
+
+    # compute the outlier threshold (if required)
+    if outlier_threshold is None:
+        outlier_threshold = outlier.detect_outlier_score_threshold(outlier_scores, num_bins)
 
     # add the outlier score information to the qcML export
-    qcml.add_outlier_scores(outlier_scores, outlier_threshold)
+    qcml.add_outlier_scores(outlier_scores, outlier_threshold, num_bins)
 
     # remove significant outliers
     data_including_outliers = data
@@ -133,7 +136,8 @@ def parse_args(args=None):
     parser.add_argument('--min_var', '-v', default=0.0001, type=float)
     parser.add_argument('--min_corr', '-c', default=0.9, type=float)
     parser.add_argument('--k_neighbors', '-k', type=int)
-    parser.add_argument('--min_outlier', '-o', type=float)
+    parser.add_argument('--min_outlier', '-o', default=None, type=float)
+    parser.add_argument('--num_bins', '-b', default=20, type=int)
     parser.add_argument('--min_sup', '-s', default=5, type=int)
     parser.add_argument('--min_length', '-l', default=1, type=int)
 
@@ -142,16 +146,19 @@ def parse_args(args=None):
 
 
 def run(args):
+    global qcml
+    qcml = qcml_export.QcmlExport()
+
     data = load_metrics(args.file_in, args.min_var, args.min_corr)
-    data_excluding_outliers, outliers = detect_outliers(data, args.min_outlier, args.k_neighbors)
+    data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.min_outlier, args.num_bins)
     analyze_outliers(outliers, args.min_sup, args.min_length)
 
     qcml.export('out.qcml')
 
 
-qcml = qcml_export.QcmlExport()
+qcml = None
 
 # args = parse_args(None)
-run(parse_args('-k 15 -o 0.98 TCGA_Quameter.tsv'.split()))
+run(parse_args('-k 15 TCGA_Quameter.tsv'.split()))
 
 ##############################################################################

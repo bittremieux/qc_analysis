@@ -1,32 +1,52 @@
 import itertools
-import numpy as np
-import pandas as pd
+import math
 import random
 import sqlite3
 
+import numpy as np
+import pandas as pd
+from scipy.special import erf
+from scipy.stats import gmean
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import NearestNeighbors
-
-import visualize
 
 
 random.seed()
 
 
-# TODO
-def read_elki_outlier_scores(filename):
-    f = open(filename, 'r')
+def detect_outliers_loop(data, k, l=2, metric='manhattan'):
+    # compute the nearest neighbors for all points
+    knn_dists, knn_ind = NearestNeighbors(n_neighbors=k, metric=metric).fit(data.values).kneighbors()
 
-    scores = {}
-    for line in f:
-        line = line.strip()
-        idx = int(line[line.index('ID=') + len('ID=') : line.index(' ')].strip())
-        score = float(line[line.index('outlier=') + len('outlier='):].strip())
-        scores[idx] = score
+    # compute the probabilistic set distances (pdist)
+    pdists = np.array([math.sqrt(np.sum(np.square(knn_dist)) / k) for knn_dist in knn_dists])
 
-    f.close()
+    # compute Probabilistic Outlier Factor (PLOF) values
+    plofs = np.array([pdist / np.mean([pdists[n] for n in nn]) - 1 for nn, pdist in zip(knn_ind, pdists)])
+    nplof = l * math.sqrt(np.mean(np.square(plofs)))
 
-    return np.array([scores[i] for i in sorted(scores)])
+    # compute the LoOP scores
+    loop = erf(plofs / (nplof * math.sqrt(2)))
+    loop[loop < 0] = 0
+
+    return loop
+
+
+def detect_outlier_score_threshold(scores, num_bins):
+    hist, bin_edges = np.histogram(scores, bins=num_bins, range=(0, 1), density=False)
+
+    threshold = 0
+    threshold_mean = 0
+    for i, count in enumerate(hist):
+        if bin_edges[i] >= 0.5:
+            diff = float(hist[i - 1] - count) / len(scores)
+            if diff > 0:
+                mean = gmean([diff, 1.0 / (count + 1), float(len(hist) - i) / len(hist)])
+                if mean > threshold_mean:
+                    threshold = bin_edges[i]
+                    threshold_mean = mean
+
+    return threshold
 
 
 def split_outliers(data, outlier_scores, outlier_threshold):
@@ -66,7 +86,7 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
 
     repeats = 10
     importances = np.zeros(len(outlier_values), float)
-    for i in range(repeats):
+    for repeat in range(repeats):
         # subsample random inliers
         random_inliers_idx = random.sample([x for x in range(len(data)) if x not in ref_set_idx], len(ref_set_idx))
 
@@ -90,14 +110,14 @@ def get_relevant_subspace(feature_importances):
     subspace = []
     explained_importance = 0
     min_importance = feature_importances[0] * 2 / 3
-    for i in range(len(feature_importances)):
+    for i, feature_importance in enumerate(feature_importances):
         subspace.append(feature_importances.index.values[i])
 
-        explained_importance += feature_importances[i]
+        explained_importance += feature_importance
         if explained_importance > 0.5 or i < len(feature_importances) - 1 and feature_importances[i + 1] < min_importance:
             break
 
-    return np.array(subspace, dtype=object)
+    return np.array(subspace, object)
 
 
 # TODO
