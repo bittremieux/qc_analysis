@@ -654,7 +654,7 @@ class qcMLType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<?xml-stylesheet type="text/xml" href="outlier_html.xsl"?>%s' % (eol_, ))
+        outfile.write('<?xml-stylesheet type="text/xml" href="#outlier-html"?>%s' % (eol_, ))
         outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='qcMLType')
@@ -1697,24 +1697,23 @@ class embeddedStylesheetListType(GeneratedsSuper):
         else:
             return False
     def export(self, outfile, level, namespace_='', name_='embeddedStylesheetListType', namespacedef_='', pretty_print=True):
-        # if pretty_print:
-        #     eol_ = '\n'
-        # else:
-        #     eol_ = ''
-        # if self.original_tagname_ is not None:
-        #     name_ = self.original_tagname_
-        # showIndent(outfile, level, pretty_print)
-        # outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        # already_processed = set()
-        # self.exportAttributes(outfile, level, already_processed, namespace_, name_='embeddedStylesheetListType')
-        # if self.hasContent_():
-        #     outfile.write('>%s' % (eol_, ))
-        #     self.exportChildren(outfile, level + 1, namespace_='', name_='embeddedStylesheetListType', pretty_print=pretty_print)
-        #     showIndent(outfile, level, pretty_print)
-        #     outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
-        # else:
-        #     outfile.write('/>%s' % (eol_, ))
-        outfile.write('<embeddedStylesheetList>{}</embeddedStylesheetList>'.format(self.anytypeobjs_))
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='embeddedStylesheetListType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='', name_='embeddedStylesheetListType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='embeddedStylesheetListType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='embeddedStylesheetListType', fromsubclass_=False, pretty_print=True):
@@ -1723,7 +1722,7 @@ class embeddedStylesheetListType(GeneratedsSuper):
         else:
             eol_ = ''
         for obj_ in self.anytypeobjs_:
-            obj_.export(outfile, level, namespace_, pretty_print=pretty_print)
+            outfile.write(obj_)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)

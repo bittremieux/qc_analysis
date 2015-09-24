@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet id="outlier-html" version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns="http://www.prime-xs.eu/ms/qcml" xmlns="">
     <xsl:template match="/">
         <html style="font-family:Arial;">
@@ -124,7 +123,8 @@
                                                 <img><xsl:attribute name="src">data:image/svg+xml;base64,
                                                     <xsl:value-of select="ns:attachment[@ID='OutlierScoreHistogram']/ns:binary"/></xsl:attribute>
                                                 </img>
-                                                <figcaption><b><xsl:value-of select="ns:qualityParameter[@ID='OutlierScoreThreshold']/@name"/> = <xsl:value-of select="format-number(ns:qualityParameter[@ID='OutlierScoreThreshold']/@value, '00.00%')"/></b></figcaption>
+                                                <figcaption><b><xsl:value-of select="ns:qualityParameter[@ID='OutlierScoreThreshold']/@name"/> = <xsl:value-of select="format-number(ns:qualityParameter[@ID='OutlierScoreThreshold']/@value, '00.00%')"/><br/>
+                                                    <xsl:value-of select="ns:qualityParameter[@ID='NrOutliers']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='NrOutliers']/@value"/></b></figcaption>
                                             </figure>
                                         </td>
                                         <td>
@@ -145,7 +145,7 @@
                                                </table>
                                             </p>
                                             <p>
-                                                <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@value"/>%
+                                                <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@value"/>
                                                 <br/>
                                                 <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@value"/>
                                             </p>

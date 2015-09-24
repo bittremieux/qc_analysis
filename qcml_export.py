@@ -25,6 +25,10 @@ class QcmlExport:
         # add global outlier information in a setQuality
         self.qcml_out.add_setQuality(self.set_quality)
 
+        # add embedded stylesheet
+        with open('to_html.xsl', 'r') as xsl:
+            self.qcml_out.set_embeddedStylesheetList(qcml.embeddedStylesheetListType(anytypeobjs_=xsl.read()))
+
     def add_low_variance(self, variances, min_var):
         param_var = qcml.QualityParameterType(name='Variance threshold', ID='VarianceThreshold', value='{:.3e}'.format(min_var),
                                               cvRef=self.cv_outlier.get_ID(), accession='none')
@@ -69,6 +73,9 @@ class QcmlExport:
         param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold,
                                                 cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_qualityParameter(param_score)
+        param_nr = qcml.QualityParameterType(name='Number of outliers', ID='NrOutliers', value=(outlier_scores > outlier_threshold).sum(),
+                                             cvRef=self.cv_outlier.get_ID(), accession='none')
+        self.set_quality.add_qualityParameter(param_nr)
 
         attach_hist = qcml.AttachmentType(name='Outlier score histogram', ID='OutlierScoreHistogram', qualityParameterRef=param_score.get_ID(),
                                           binary=visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='__qcml_export__'),
@@ -103,7 +110,8 @@ class QcmlExport:
                                                        qualityParameterRef=score.get_ID()))
 
     def add_frequent_outlier_subspaces(self, subspaces, min_sup, min_length):
-        param_support = qcml.QualityParameterType(name='Minimum support', ID='minsup', value=min_sup,
+        param_support = qcml.QualityParameterType(name='Minimum support', ID='minsup',
+                                                  value='{}{}'.format(min_sup, '%' if min_sup > 0 else -1 * min_sup, ''),
                                                   cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_qualityParameter(param_support)
         param_length = qcml.QualityParameterType(name='Minimum subspace length', ID='minlength', value=min_length,
@@ -117,6 +125,5 @@ class QcmlExport:
                                                             cvRef=self.cv_outlier.get_ID(), accession='none'))
 
     def export(self, filename):
-        # TODO: style sheet for viewing in a browser
         with open(filename, 'w') as outfile:
             self.qcml_out.export(outfile, 0, name_='qcML', namespacedef_='xmlns="http://www.prime-xs.eu/ms/qcml"')
