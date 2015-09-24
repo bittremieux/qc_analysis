@@ -19,6 +19,9 @@
                 table {
                     margin: auto;
                 }
+                td {
+                    vertical-align: top;
+                }
                 hr {
                     border-color: #000000;
                     border-style: solid;
@@ -69,7 +72,7 @@
                                     </tr>
                                     <tr>
                                         <td><h3>Preprocessing</h3></td>
-                                        <td><h3><h4><xsl:value-of select="ns:attachment[@ID='OutlierScoreHistogram']/@name"/></h4></h3></td>
+                                        <td colspan="2"><h3>Outlier analysis</h3></td>
                                     </tr>
                                     <tr>
                                         <td>
@@ -123,6 +126,29 @@
                                                 </img>
                                                 <figcaption><b><xsl:value-of select="ns:qualityParameter[@ID='OutlierScoreThreshold']/@name"/> = <xsl:value-of select="format-number(ns:qualityParameter[@ID='OutlierScoreThreshold']/@value, '00.00%')"/></b></figcaption>
                                             </figure>
+                                        </td>
+                                        <td>
+                                            <p>
+                                               <table>
+                                                   <tr class="table-header">
+                                                       <xsl:call-template name="table-header">
+                                                           <xsl:with-param name="list"><xsl:value-of select="ns:attachment[@ID='freq']/ns:table/ns:tableColumnTypes"/></xsl:with-param>
+                                                       </xsl:call-template>
+                                                   </tr>
+                                                   <xsl:for-each select="ns:attachment[@ID='freq']/ns:table/ns:tableRowValues">
+                                                       <tr>
+                                                           <xsl:call-template name="table-row">
+                                                               <xsl:with-param name="list"><xsl:value-of select="." /></xsl:with-param>
+                                                           </xsl:call-template>
+                                                       </tr>
+                                                   </xsl:for-each>
+                                               </table>
+                                            </p>
+                                            <p>
+                                                <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@value"/>%
+                                                <br/>
+                                                <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@value"/>
+                                            </p>
                                         </td>
                                     </tr>
                                 

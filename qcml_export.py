@@ -12,7 +12,7 @@ class QcmlExport:
 
     cv_ms = qcml.CVType('PSI-MS', '3.78.0', 'http://psidev.cvs.sourceforge.net/viewvc/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo', 'MS')
     cv_qc = qcml.CVType('MS-QC', '0.1.1', 'https://github.com/qcML/qcML-development/blob/master/cv/qc-cv.obo', 'QC')
-    cv_quameter = qcml.CVType('QuaMeter', '0', 'http://pubs.acs.org/doi/abs/10.1021/ac300629p', 'QM')
+    cv_outlier = qcml.CVType('Outlier detection and interpretation', '0', 'article/code link', 'outlier')
 
     creation_date = datetime.datetime.now()
 
@@ -20,21 +20,25 @@ class QcmlExport:
         self.qcml_out.set_version('0.0.8')
 
         # add references to the controlled vocabularies (CV's)
-        self.qcml_out.set_cvList(qcml.CVListType([self.cv_ms, self.cv_qc, self.cv_quameter]))
+        self.qcml_out.set_cvList(qcml.CVListType([self.cv_ms, self.cv_qc, self.cv_outlier]))
 
         # add global outlier information in a setQuality
         self.qcml_out.add_setQuality(self.set_quality)
 
     def add_low_variance(self, variances, min_var):
-        param_var = qcml.QualityParameterType(name='Variance threshold', ID='VarianceThreshold', value='{:.3e}'.format(min_var))
+        param_var = qcml.QualityParameterType(name='Variance threshold', ID='VarianceThreshold', value='{:.3e}'.format(min_var),
+                                              cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_qualityParameter(param_var)
 
         values = [' '.join((v[0], '{:.3e}'.format(v[1]))) for v in variances[variances <= min_var].iteritems()]
         table = qcml.TableType(tableColumnTypes=['RemovedMetric', 'Variance'], tableRowValues=values)
-        self.set_quality.add_attachment(qcml.AttachmentType(name='Low variance metrics', ID='var', table=table, qualityParameterRef=param_var.get_ID()))
+        self.set_quality.add_attachment(qcml.AttachmentType(name='Low variance metrics', ID='var', table=table,
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none',
+                                                            qualityParameterRef=param_var.get_ID()))
 
     def add_correlation(self, corr, min_corr):
-        param_corr = qcml.QualityParameterType(name='Correlation threshold', ID='CorrelationThreshold', value=min_corr)
+        param_corr = qcml.QualityParameterType(name='Correlation threshold', ID='CorrelationThreshold', value=min_corr,
+                                               cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_qualityParameter(param_corr)
 
         values = []
@@ -46,22 +50,29 @@ class QcmlExport:
                         corr_features.add(corr.columns.values[col])
                         values.append(' '.join((corr.columns.values[row], corr.columns.values[col], '{:.2%}'.format(corr.iloc[row, col]))))
         table = qcml.TableType(tableColumnTypes=['RetainedMetric', 'RemovedMetric', 'Correlation'], tableRowValues=values)
-        self.set_quality.add_attachment(qcml.AttachmentType(name='Correlated metrics', ID='corr', table=table, qualityParameterRef=param_corr.get_ID()))
+        self.set_quality.add_attachment(qcml.AttachmentType(name='Correlated metrics', ID='corr', table=table,
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none',
+                                                            qualityParameterRef=param_corr.get_ID()))
 
     def add_visualization(self, data):
         self.set_quality.add_attachment(qcml.AttachmentType(name='Experiment execution time', ID='time',
-                                                            binary=visualize.visualize_timestamps(data, filename='__qcml_export__')))
+                                                            binary=visualize.visualize_timestamps(data, filename='__qcml_export__'),
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none'))
         self.set_quality.add_attachment(qcml.AttachmentType(name='PCA visualization', ID='PCA',
-                                                            binary=visualize.visualize_pca(data, filename='__qcml_export__')))
+                                                            binary=visualize.visualize_pca(data, filename='__qcml_export__'),
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none'))
         self.set_quality.add_attachment(qcml.AttachmentType(name='t-SNE visualization', ID='t-SNE',
-                                                            binary=visualize.visualize_tsne(data, filename='__qcml_export__')))
+                                                            binary=visualize.visualize_tsne(data, filename='__qcml_export__'),
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none'))
 
     def add_outlier_scores(self, outlier_scores, outlier_threshold, num_bins):
-        param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold)
+        param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold,
+                                                cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_qualityParameter(param_score)
 
         attach_hist = qcml.AttachmentType(name='Outlier score histogram', ID='OutlierScoreHistogram', qualityParameterRef=param_score.get_ID(),
-                                          binary=visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='__qcml_export__'))
+                                          binary=visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='__qcml_export__'),
+                                          cvRef=self.cv_outlier.get_ID(), accession='none')
         self.set_quality.add_attachment(attach_hist)
 
     def add_outlier_runquality(self, outlier, data):
@@ -73,7 +84,8 @@ class QcmlExport:
                                                             ID='{}_CreationDate'.format(run_quality.get_ID())))
 
         score = qcml.QualityParameterType(name='Outlier score', value=outlier['OutlierScore'],
-                                          ID='{}_OutlierScore'.format(run_quality.get_ID()))
+                                          ID='{}_OutlierScore'.format(run_quality.get_ID()),
+                                          cvRef=self.cv_outlier.get_ID(), accession='none')
         run_quality.add_qualityParameter(score)
 
         feature_importance = pd.Series(outlier['FeatureImportance'], index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
@@ -82,11 +94,27 @@ class QcmlExport:
         fig_subspace = visualize.visualize_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='__qcml_export__')
 
         run_quality.add_attachment(qcml.AttachmentType(name='Feature importance', binary=fig_features,
-                                   ID='{}_FeatureImportance'.format(run_quality.get_ID()),
-                                   qualityParameterRef=score.get_ID()))
+                                                       ID='{}_FeatureImportance'.format(run_quality.get_ID()),
+                                                       cvRef=self.cv_outlier.get_ID(), accession='none',
+                                                       qualityParameterRef=score.get_ID()))
         run_quality.add_attachment(qcml.AttachmentType(name='Explanatory subspace', binary=fig_subspace,
                                                        ID='{}_Subspace'.format(run_quality.get_ID()),
+                                                       cvRef=self.cv_outlier.get_ID(), accession='none',
                                                        qualityParameterRef=score.get_ID()))
+
+    def add_frequent_outlier_subspaces(self, subspaces, min_sup, min_length):
+        param_support = qcml.QualityParameterType(name='Minimum support', ID='minsup', value=min_sup,
+                                                  cvRef=self.cv_outlier.get_ID(), accession='none')
+        self.set_quality.add_qualityParameter(param_support)
+        param_length = qcml.QualityParameterType(name='Minimum subspace length', ID='minlength', value=min_length,
+                                                 cvRef=self.cv_outlier.get_ID(), accession='none')
+        self.set_quality.add_qualityParameter(param_length)
+
+        values = ['{} {}'.format(subspace.iloc[0].replace(', ', '_'), subspace.iloc[1]) for _, subspace in subspaces.iterrows()]
+        table = qcml.TableType(tableColumnTypes=['Subspace', 'NrOutliers'], tableRowValues=values)
+        self.set_quality.add_attachment(qcml.AttachmentType(name='Frequently occuring explanatory subspaces', ID='freq',
+                                                            table=table, qualityParameterRef=param_support.get_ID(),
+                                                            cvRef=self.cv_outlier.get_ID(), accession='none'))
 
     def export(self, filename):
         # TODO: style sheet for viewing in a browser

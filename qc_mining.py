@@ -21,14 +21,31 @@ def load_metrics(file_in, min_var, min_corr):
     data, variance, corr = preprocess.preprocess(data_raw, min_variance=min_var, min_corr=min_corr)
 
     # add the preprocessing results to the qcML export
-    # visualize.visualize_correlation_matrix(corr)
     qcml.add_low_variance(pd.Series(variance, index=data_raw.columns.values), min_var)
     qcml.add_correlation(corr, min_corr)
 
     # add general visualizations to the qcML export
     qcml.add_visualization(data)
 
+    # optional: correlation matrix & PCA loadings
+    # visualize.visualize_correlation_matrix(corr)
+    # print pca_loadings_table(pca, df.columns.values)
+
     return data
+
+
+def pca_loadings_table(pca, metrics):
+    pca_table = pd.DataFrame(index=range(len(metrics)), columns=['Metric', 0, 1])
+
+    pca_table['Metric'] = metrics
+    pca_table[0] = pca.components_[0]
+    pca_table[1] = pca.components_[1]
+    pca_table.columns = ['Metric',
+                         '{{PC 1 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[0] * 100),
+                         '{{PC 2 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[1] * 100)]
+
+    return pca_table.to_latex(index=False, escape=False, float_format=lambda x: '{}{:.5f}'.format(
+        '\cellcolor{gray} ' if abs(x) >= 0.4 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x))
 
 
 ##############################################################################
@@ -37,7 +54,7 @@ def load_metrics(file_in, min_var, min_corr):
 
 def detect_outliers(data, k, outlier_threshold=None, num_bins=20):
     # compute outlier scores
-    outlier_scores = outlier.detect_outliers_loop(data, k, metric='manhattan')
+    outlier_scores = outlier.detect_outliers_loop(data, k)
 
     # compute the outlier threshold (if required)
     if outlier_threshold is None:
@@ -69,13 +86,15 @@ def analyze_outliers(outliers, min_sup, min_length):
     frequent_subspaces = sorted(fim.fim(outliers.Subspace, supp=min_sup, zmin=min_length), key=lambda x: x[1][0], reverse=True)
     frequent_subspaces_table = pd.DataFrame(index=range(len(frequent_subspaces)),
                                             columns=['Outlier subspace QC metric(s)', 'Number of outlying experiments'])
-    for i, (subspace, (support,)) in zip(range(len(frequent_subspaces)), frequent_subspaces):
+    for i, (subspace, (support,)) in enumerate(frequent_subspaces):
         frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
         frequent_subspaces_table.set_value(i, 'Number of outlying experiments', support)
 
-    # TODO
+    qcml.add_frequent_outlier_subspaces(frequent_subspaces_table, min_sup, min_length)
+
     # print frequent_subspaces_table.to_latex(index=False)
 
+    # TODO
     # # compare inliers and outliers based on their number of valid PSM's
     # psms = outlier.get_nr_psms('/Volumes/BADReM Wout/TCGA_Zhang/idp/VU_N95_PP.idpDB')
     #
@@ -121,6 +140,19 @@ def analyze_outliers(outliers, min_sup, min_length):
     #
     # visualize.visualize_boxplot(psm_table, filename='psm_subspace.pdf', orient='h')
 
+
+# def visualize_psm_boxplot(data, filename=None, **kwargs):
+#     mpl.rc('text', usetex=True)
+#     mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
+#
+#     with sns.axes_style('whitegrid'):
+#         fig = plt.figure()
+#         fig.set_tight_layout(True)
+#
+#         sns.boxplot(data=data, **kwargs)
+#
+#         return output_figure(filename)
+
 ##############################################################################
 
 #  EXECUTE
@@ -159,6 +191,6 @@ def run(args):
 qcml = None
 
 # args = parse_args(None)
-run(parse_args('-k 15 TCGA_Quameter.tsv'.split()))
+run(parse_args('-k 15 -s 10 TCGA_Quameter.tsv'.split()))
 
 ##############################################################################
