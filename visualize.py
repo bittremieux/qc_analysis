@@ -1,10 +1,11 @@
+import StringIO
+
 import matplotlib as mpl
-# mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import StringIO
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn_pandas import DataFrameMapper
@@ -32,7 +33,7 @@ def output_figure(filename):
     return out
 
 
-# Remember to change the matplotlib backend for the heatmap annotation to work!
+# Remember to use the Agg matplotlib backend for the heatmap annotation to work!
 def visualize_correlation_matrix(corr, filename=None):
     plt.figure(figsize=(11, 10))
 
@@ -165,5 +166,18 @@ def visualize_subspace_boxplots(data, highlights=None, filename=None):
                 plt.plot(i, highlights[i], color='red', marker='d')
 
         plt.xticks(rotation=30, fontsize=10)
+
+        return output_figure(filename)
+
+
+def visualize_psm_boxplots(data, filename=None, **kwargs):
+    mpl.rc('text', usetex=True)
+    mpl.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
+
+    with sns.axes_style('whitegrid'):
+        fig = plt.figure()
+        fig.set_tight_layout(True)
+
+        sns.boxplot(data=data, **kwargs)
 
         return output_figure(filename)
