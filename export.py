@@ -183,8 +183,12 @@ class Exporter:
 
     def frequent_outlier_subspaces(self, subspaces, min_sup, min_length):
         if self.export_qcml:
+            if min_sup > 0:
+                min_sup_str = '{}%'.format(min_sup)
+            else:
+                min_sup_str = '{}'.format(min_sup * -1)
             param_support = qcml.QualityParameterType(name='Minimum support', ID='minsup',
-                                                      value='{}{}'.format(min_sup, '%' if min_sup > 0 else -1 * min_sup, ''),
+                                                      value=min_sup_str,
                                                       cvRef=self.cv_outlier.get_ID(), accession='none')
             self.set_quality.add_qualityParameter(param_support)
             param_length = qcml.QualityParameterType(name='Minimum subspace length', ID='minlength', value=min_length,
