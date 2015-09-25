@@ -123,24 +123,33 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 
 #  EXECUTE
 
-# if __name__ == '__main__':
 
-
-def parse_args(args=None):
-    parser = argparse.ArgumentParser(description='Quality control metrics outlier detection', epilog='Citation information')
-    parser.add_argument('file_in', type=argparse.FileType('r'))
-    # TODO
-    # parser.add_argument('file_out', type=argparse.FileType('w'), required=False)
-    parser.add_argument('--min_var', '-v', default=0.0001, type=float)
-    parser.add_argument('--min_corr', '-c', default=0.9, type=float)
-    parser.add_argument('--k_neighbors', '-k', type=int)
-    parser.add_argument('--min_outlier', '-o', default=None, type=float)
-    parser.add_argument('--num_bins', '-b', default=20, type=int)
-    parser.add_argument('--min_sup', '-s', default=5, type=int)
-    parser.add_argument('--min_length', '-l', default=1, type=int)
+def parse_args():
+    parser = argparse.ArgumentParser(description='Mass spectrometry quality control metrics outlier detection',
+                                     epilog='Please cite the paper if you use this software!')
+    parser.add_argument('file_in', type=argparse.FileType('r'),
+                        help='the tab-separated input file containing the QC metrics')
+    parser.add_argument('file_out', type=argparse.FileType('w'),
+                        help='the name of the qcML output file')
+    parser.add_argument('--min_var', '-v', default=0.0001, type=float,
+                        help='metrics with a lower variance will be removed (default: %(default)s)')
+    parser.add_argument('--min_corr', '-c', default=0.9, type=float,
+                        help='metrics with a higher correlation will be removed (default: %(default)s)')
+    parser.add_argument('--k_neighbors', '-k', type=int, required=True,
+                        help='the number of nearest neighbors used for outlier detection')
+    parser.add_argument('--min_outlier', '-o', default=None, type=float,
+                        help='the minimum outlier score threshold (default: %(default)s)\n'
+                             'if no threshold is provided, an automatic threshold is determined')
+    parser.add_argument('--num_bins', '-b', default=20, type=int,
+                        help='the number of bins for the outlier score histogram (default: %(default)s)')
+    parser.add_argument('--min_sup', '-s', default=5, type=int,
+                        help='the minimum support for subspace frequent itemset mining (default: %(default)s)\n'
+                             'positive numbers are interpreted as percentages, negative numbers as absolute supports')
+    parser.add_argument('--min_length', '-l', default=1, type=int,
+                        help='the minimum length each subspace itemset should be (default: %(default)s)')
 
     # parse command-line arguments
-    return parser.parse_args(args)
+    return parser.parse_args()
 
 
 def run(args):
@@ -156,7 +165,8 @@ def run(args):
 
     exporter.export('out.qcml')
 
-# args = parse_args(None)
-run(parse_args('-k 15 TCGA_Quameter.tsv'.split()))
+
+if __name__ == '__main__':
+    run(parse_args())
 
 ##############################################################################
