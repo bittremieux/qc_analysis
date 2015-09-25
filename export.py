@@ -1,5 +1,6 @@
 import datetime
 import os
+import sqlite3
 
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -21,6 +22,19 @@ def pca_loadings_table(pca, metrics):
 
     return pca_table.to_latex(index=False, escape=False, float_format=lambda x: '{}{:.5f}'.format(
         '\cellcolor{gray} ' if abs(x) >= 0.4 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x))
+
+
+def extract_idp_psms_to_file(f_in, f_out):
+    # export the number of PSM's for each sample from the IDPicker database to a csv file
+    conn = sqlite3.connect(f_in)
+
+    psms = {}
+    c = conn.cursor()
+    for result in c.execute(
+            'SELECT SS.Name, COUNT(*) FROM PeptideSpectrumMatch PSM, Spectrum S, SpectrumSource SS WHERE PSM.Spectrum = S.Id AND S.Source = SS.Id GROUP BY SS.Id'):
+        psms[result[0]] = result[1]
+
+    pd.Series(psms).to_csv(f_out)
 
 
 class Exporter:
@@ -186,6 +200,26 @@ class Exporter:
         if self.export_figures:
             with open('table_freq.txt', 'w') as f_out:
                 f_out.write(subspaces.to_latex(index=False))
+
+    def psm(self, inlier_psms, outlier_psms):
+        if self.export_qcml:
+            pass
+
+        if self.export_figures:
+            visualize.visualize_psm_boxplots(pd.DataFrame({'Inliers ({})'.format(len(inlier_psms)): inlier_psms,
+                                                           'Outliers ({})'.format(len(outlier_psms)): outlier_psms}),
+                                             filename='psm_all.pdf')
+
+    def psm_pval(self, psms, pvals):
+        if self.export_qcml:
+            pass
+
+        if self.export_figures:
+            with open('table_psm_pval.txt', 'w') as f_out:
+                f_out.write(pvals.to_latex(index=False, escape=False,
+                                           float_format=lambda x: '{}{:.5f}'.format('\cellcolor{lightgray} ' if x <= 0.05 else '', x)))
+
+        visualize.visualize_psm_boxplots(psms, orient='h', filename='psm_subspace.pdf')
 
     def export(self, filename):
         if self.export_qcml:

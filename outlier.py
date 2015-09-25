@@ -1,7 +1,6 @@
 import itertools
 import math
 import random
-import sqlite3
 
 import numpy as np
 import pandas as pd
@@ -118,32 +117,3 @@ def get_relevant_subspace(feature_importances):
             break
 
     return np.array(subspace, object)
-
-
-# TODO
-def get_inlier_outlier_nr_psms(filename, inlier_names):
-    conn = sqlite3.connect(filename)
-
-    inlier_psms = {}
-    outlier_psms = {}
-    c = conn.cursor()
-    for result in c.execute('SELECT SS.Name, COUNT(*) FROM PeptideSpectrumMatch PSM, Spectrum S, SpectrumSource SS WHERE PSM.Spectrum = S.Id AND S.Source = SS.Id GROUP BY SS.Id'):
-        if result[0] in inlier_names:
-            inlier_psms[result[0]] = result[1]
-        else:
-            outlier_psms[result[0]] = result[1]
-
-    return pd.Series(inlier_psms), pd.Series(outlier_psms)
-
-
-# TODO
-def get_nr_psms(filename):
-    conn = sqlite3.connect(filename)
-
-    psms = {}
-    c = conn.cursor()
-    for result in c.execute(
-            'SELECT SS.Name, COUNT(*) FROM PeptideSpectrumMatch PSM, Spectrum S, SpectrumSource SS WHERE PSM.Spectrum = S.Id AND S.Source = SS.Id GROUP BY SS.Id'):
-        psms[result[0]] = result[1]
-
-    return pd.Series(psms)

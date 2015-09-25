@@ -1,6 +1,7 @@
 import argparse
 
 import fim
+import scipy.stats as stats
 import pandas as pd
 
 import outlier
@@ -78,6 +79,48 @@ def analyze_outliers(outliers, min_sup, min_length):
 
 ##############################################################################
 
+# OUTLIER VALIDATION BY PSM COMPARISON (for the manuscript)
+
+def compare_outlier_psms(f_psms, outliers):
+    # compare inliers and outliers based on their number of valid PSM's
+    psms = pd.Series.from_csv(f_psms)
+
+    outlier_psms = psms.filter(items=[index[0] for index in outliers.index.values])
+    inlier_psms = psms.drop(outlier_psms.index)
+
+    exporter.psm(inlier_psms, outlier_psms)
+
+    return psms, inlier_psms, outlier_psms
+
+
+def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms):
+    # test whether a subspace can be related to a lower number of PSM's
+    psm_table = pd.DataFrame(index=psms.index)
+    psm_table['\\bfseries Inliers'] = inlier_psms
+    pval_table = pd.DataFrame(index=range(len(frequent_subspaces)), columns=['Metric(s)', 'Number of outliers', '\emph{p}-value'])
+    for i, (subspace, (support,)) in enumerate(frequent_subspaces):
+        subspace = map(None, subspace)
+
+        # compare outlier values
+        outliers_values = pd.DataFrame([this_outlier for _, this_outlier in outliers.iterrows() if set(subspace) <= set(this_outlier.Subspace)])
+
+        # compare outlier PSM's
+        outlier_psms = psms.filter(items=[index[0] for index in outliers_values.index.values])
+
+        # quantify difference between inliers and outliers
+        t_stat, p_value = stats.ttest_ind(inlier_psms.values, outlier_psms.values, equal_var=False)
+
+        psm_table['{}{}'.format('\\itshape ' if p_value <= 0.05 else '', ', '.join(subspace))] = outlier_psms
+
+        pval_table.set_value(i, 'Metric(s)', ', '.join(subspace))
+        pval_table.set_value(i, 'Number of outliers', support)
+        pval_table.set_value(i, '\emph{p}-value', p_value)
+
+    exporter.psm_pval(psm_table, pval_table)
+
+
+##############################################################################
+
 #  EXECUTE
 
 # if __name__ == '__main__':
@@ -108,13 +151,12 @@ def run(args):
     data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.min_outlier, args.num_bins)
     frequent_subspaces = analyze_outliers(outliers, args.min_sup, args.min_length)
 
+    psms, inlier_psms, outlier_psms = compare_outlier_psms('psms.csv', outliers)
+    compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms)
+
     exporter.export('out.qcml')
 
-    import validate
-    psms, inlier_psms, outlier_psms = validate.compare_outlier_psms('psms.csv', outliers)
-    validate.compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms)
-
 # args = parse_args(None)
-run(parse_args('-k 15 -o 0.99 TCGA_Quameter.tsv'.split()))
+run(parse_args('-k 15 TCGA_Quameter.tsv'.split()))
 
 ##############################################################################
