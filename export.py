@@ -225,10 +225,9 @@ class Exporter:
 
         visualize.visualize_psm_boxplots(psms, orient='h', filename='psm_subspace.pdf')
 
-    def export(self, filename):
+    def export(self, file_out):
         if self.export_qcml:
-            with open(filename, 'w') as outfile:
-                self.qcml_out.export(outfile, 0, name_='qcML', namespacedef_='xmlns="http://www.prime-xs.eu/ms/qcml"')
+            self.qcml_out.export(file_out, 0, name_='qcML', namespacedef_='xmlns="http://www.prime-xs.eu/ms/qcml"')
 
         if self.export_figures:
             pass

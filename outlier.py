@@ -104,16 +104,16 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
 
 
 def get_relevant_subspace(feature_importances):
-    feature_importances.sort(ascending=False)
+    features_sorted = feature_importances.sort(ascending=False, inplace=False)
 
     subspace = []
     explained_importance = 0
-    min_importance = feature_importances[0] * 2 / 3
-    for i, feature_importance in enumerate(feature_importances):
-        subspace.append(feature_importances.index.values[i])
+    min_importance = features_sorted[0] * 2 / 3
+    for i, feature_importance in enumerate(features_sorted):
+        subspace.append(features_sorted.index.values[i])
 
         explained_importance += feature_importance
-        if explained_importance > 0.5 or i < len(feature_importances) - 1 and feature_importances[i + 1] < min_importance:
+        if explained_importance > 0.5 or i < len(features_sorted) - 1 and features_sorted[i + 1] < min_importance:
             break
 
     return np.array(subspace, object)

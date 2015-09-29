@@ -163,7 +163,7 @@ def run(args):
     psms, inlier_psms, outlier_psms = compare_outlier_psms('psms.csv', outliers)
     compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms)
 
-    exporter.export('out.qcml')
+    exporter.export(args.file_out)
 
 
 if __name__ == '__main__':
