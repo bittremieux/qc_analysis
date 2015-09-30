@@ -1,24 +1,24 @@
 import argparse
 
 import fim
-import scipy.stats as stats
 import pandas as pd
+import scipy.stats as stats
 
+import export
 import outlier
 import preprocess
-import export
 
 
 ##############################################################################
 
 # DATA LOADING AND PRE-PROCESSING
 
-def load_metrics(file_in, min_var, min_corr):
+def load_metrics(file_in, min_var, min_corr, scaling):
     # load data from the input file
     data_raw = preprocess.load_metrics(file_in)
 
     # pre-process: remove low-variance and correlated metrics & scale the values
-    data, variance, corr = preprocess.preprocess(data_raw, min_variance=min_var, min_corr=min_corr)
+    data, variance, corr = preprocess.preprocess(data_raw, min_variance=min_var, min_corr=min_corr, scaling_mode=scaling)
 
     # add the preprocessing results to the qcML export
     exporter.low_variance(pd.Series(variance, index=data_raw.columns.values), min_var)
@@ -34,9 +34,9 @@ def load_metrics(file_in, min_var, min_corr):
 
 # OUTLIER DETECTION
 
-def detect_outliers(data, k, outlier_threshold=None, num_bins=20):
+def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
     # compute outlier scores
-    outlier_scores = outlier.detect_outliers_loop(data, k)
+    outlier_scores = outlier.detect_outliers_loop(data, k, metric=dist)
 
     # compute the outlier threshold (if required)
     if outlier_threshold is None:
@@ -123,29 +123,32 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 
 #  EXECUTE
 
-
 def parse_args():
-    parser = argparse.ArgumentParser(description='Mass spectrometry quality control metrics outlier detection',
-                                     epilog='Please cite the paper if you use this software!')
+    parser = argparse.ArgumentParser(description='Mass spectrometry quality control metrics analysis')
     parser.add_argument('file_in', type=argparse.FileType('r'),
                         help='the tab-separated input file containing the QC metrics')
     parser.add_argument('file_out', type=argparse.FileType('w'),
                         help='the name of the qcML output file')
-    parser.add_argument('--min_var', '-v', default=0.0001, type=float,
+    parser.add_argument('--min_var', '-var', default=0.0001, type=float,
                         help='metrics with a lower variance will be removed (default: %(default)s)')
-    parser.add_argument('--min_corr', '-c', default=0.9, type=float,
+    parser.add_argument('--min_corr', '-corr', default=0.9, type=float,
                         help='metrics with a higher correlation will be removed (default: %(default)s)')
+    parser.add_argument('--scaling_mode', '-scale', default='robust', type=str, choices=['robust', 'standard'],
+                        help='mode to standardize the metric values (default: %(default)s)')
     parser.add_argument('--k_neighbors', '-k', type=int, required=True,
                         help='the number of nearest neighbors used for outlier detection')
+    parser.add_argument('--distance', '-dist', default='manhattan', type=str,
+                        help='metric to use for distance computation (default: %(default)s) '
+                             'ny metric from scikit-learn or scipy.spatial.distance can be used')
     parser.add_argument('--min_outlier', '-o', default=None, type=float,
-                        help='the minimum outlier score threshold (default: %(default)s)\n'
+                        help='the minimum outlier score threshold (default: %(default)s) '
                              'if no threshold is provided, an automatic threshold is determined')
-    parser.add_argument('--num_bins', '-b', default=20, type=int,
+    parser.add_argument('--num_bins', '-bin', default=20, type=int,
                         help='the number of bins for the outlier score histogram (default: %(default)s)')
-    parser.add_argument('--min_sup', '-s', default=5, type=int,
-                        help='the minimum support for subspace frequent itemset mining (default: %(default)s)\n'
+    parser.add_argument('--min_sup', '-sup', default=5, type=int,
+                        help='the minimum support for subspace frequent itemset mining (default: %(default)s) '
                              'positive numbers are interpreted as percentages, negative numbers as absolute supports')
-    parser.add_argument('--min_length', '-l', default=1, type=int,
+    parser.add_argument('--min_length', '-len', default=1, type=int,
                         help='the minimum length each subspace itemset should be (default: %(default)s)')
 
     # parse command-line arguments
@@ -154,14 +157,11 @@ def parse_args():
 
 def run(args):
     global exporter
-    exporter = export.Exporter(True, True)
+    exporter = export.Exporter(True, False)
 
-    data = load_metrics(args.file_in, args.min_var, args.min_corr)
-    data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.min_outlier, args.num_bins)
+    data = load_metrics(args.file_in, args.min_var, args.min_corr, args.scaling_mode)
+    data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
     frequent_subspaces = analyze_outliers(outliers, args.min_sup, args.min_length)
-
-    psms, inlier_psms, outlier_psms = compare_outlier_psms('psms.csv', outliers)
-    compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms)
 
     exporter.export(args.file_out)
 

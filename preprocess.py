@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler
 
 
 def load_metrics(file_in):
@@ -12,12 +12,12 @@ def load_metrics(file_in):
     return metrics
 
 
-def preprocess(data, min_variance, min_corr):
+def preprocess(data, min_variance, min_corr, scaling_mode):
     # remove low-variance and correlated metrics
     data, variance = remove_low_variance_features(data, min_variance)
     data, corr = remove_correlated_features(data, min_corr)
     # scale the values
-    data = scale(data)
+    data = scale(data, scaling_mode)
 
     # sort the experiments chronologically
     data.sortlevel(level=1, inplace=True)
@@ -49,5 +49,6 @@ def remove_correlated_features(data, min_corr):
     return data, corr
 
 
-def scale(data):
-    return pd.DataFrame(RobustScaler().fit_transform(data), index=data.index, columns=data.columns)
+def scale(data, mode='robust'):
+    scaler = StandardScaler() if mode == 'standard' else RobustScaler()
+    return pd.DataFrame(scaler.fit_transform(data), index=data.index, columns=data.columns)
