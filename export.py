@@ -181,7 +181,7 @@ class Exporter:
             visualize.visualize_feature_importances(feature_importance, filename='./outlier/{}_features.pdf'.format(outlier.name[0]))
             visualize.visualize_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='./outlier/{}_subspace.pdf'.format(outlier.name[0]))
 
-    def frequent_outlier_subspaces(self, subspaces, min_sup, min_length):
+    def frequent_outlier_subspaces(self, subspaces, min_sup):
         if self.export_qcml:
             if min_sup > 0:
                 min_sup_str = '{}%'.format(min_sup)
@@ -191,9 +191,6 @@ class Exporter:
                                                       value=min_sup_str,
                                                       cvRef=self.cv_outlier.get_ID(), accession='none')
             self.set_quality.add_qualityParameter(param_support)
-            param_length = qcml.QualityParameterType(name='Minimum subspace length', ID='minlength', value=min_length,
-                                                     cvRef=self.cv_outlier.get_ID(), accession='none')
-            self.set_quality.add_qualityParameter(param_length)
 
             values = ['{} {}'.format(subspace.iloc[0].replace(', ', '_'), subspace.iloc[1]) for _, subspace in subspaces.iterrows()]
             table = qcml.TableType(tableColumnTypes=['Subspace', 'NrOutliers'], tableRowValues=values)

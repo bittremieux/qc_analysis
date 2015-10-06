@@ -1,7 +1,7 @@
 import argparse
 
-import fim
 import pandas as pd
+import pymining.itemmining as im
 import scipy.stats as stats
 
 import export
@@ -63,16 +63,17 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
     return data, outliers
 
 
-def analyze_outliers(outliers, min_sup, min_length):
+def analyze_outliers(outliers, min_sup):
     # detect frequently occurring explanatory subspaces
-    frequent_subspaces = sorted(fim.fim(outliers.Subspace, supp=min_sup, zmin=min_length), key=lambda x: x[1][0], reverse=True)
+    abs_sup = min_sup * -1 if min_sup < 0 else round(min_sup * len(outliers) // 100)
+    frequent_subspaces = sorted(im.relim(im.get_relim_input(outliers.Subspace), min_support=abs_sup).items(), key=lambda x: x[1], reverse=True)
     frequent_subspaces_table = pd.DataFrame(index=range(len(frequent_subspaces)),
                                             columns=['Outlier subspace QC metric(s)', 'Number of outlying experiments'])
-    for i, (subspace, (support,)) in enumerate(frequent_subspaces):
+    for i, (subspace, support) in enumerate(frequent_subspaces):
         frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
         frequent_subspaces_table.set_value(i, 'Number of outlying experiments', support)
 
-    exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup, min_length)
+    exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup)
 
     return frequent_subspaces
 
@@ -148,8 +149,6 @@ def parse_args():
     parser.add_argument('--min_sup', '-sup', default=5, type=int,
                         help='the minimum support for subspace frequent itemset mining (default: %(default)s) '
                              'positive numbers are interpreted as percentages, negative numbers as absolute supports')
-    parser.add_argument('--min_length', '-len', default=1, type=int,
-                        help='the minimum length each subspace itemset should be (default: %(default)s)')
 
     # parse command-line arguments
     return parser.parse_args()
@@ -161,7 +160,7 @@ def run(args):
 
     data = load_metrics(args.file_in, args.min_var, args.min_corr, args.scaling_mode)
     data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
-    frequent_subspaces = analyze_outliers(outliers, args.min_sup, args.min_length)
+    frequent_subspaces = analyze_outliers(outliers, args.min_sup)
 
     exporter.export(args.file_out)
 

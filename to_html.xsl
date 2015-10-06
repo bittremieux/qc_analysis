@@ -143,8 +143,6 @@
                                                 </p>
                                                 <p>
                                                     <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minsup']/@value"/>
-                                                    <br/>
-                                                    <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@name"/> = <xsl:value-of select="ns:qualityParameter[@ID='minlength']/@value"/>
                                                 </p>
                                             </div>
                                         </div>
