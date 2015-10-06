@@ -7,6 +7,8 @@ For more information:
 
 This tool analyzes the quality of mass spectrometry experiments based on their quality control metrics.
 
+The software is available as open-source under the Apache 2.0 license.
+
 Application
 -----------
 
@@ -14,7 +16,7 @@ Application
                           [--scaling_mode {robust,standard}] --k_neighbors
                           K_NEIGHBORS [--distance DISTANCE]
                           [--min_outlier MIN_OUTLIER] [--num_bins NUM_BINS]
-                          [--min_sup MIN_SUP] [--min_length MIN_LENGTH]
+                          [--min_sup MIN_SUP]
                           file_in file_out
 
     Mass spectrometry quality control metrics analysis
