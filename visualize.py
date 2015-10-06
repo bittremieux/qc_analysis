@@ -1,4 +1,4 @@
-import StringIO
+import io
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -21,10 +21,10 @@ def output_figure(filename):
     if filename is None:
         plt.show()
     elif filename == '__qcml_export__':
-        binary = StringIO.StringIO()
+        binary = io.BytesIO()
         plt.savefig(binary, format='svg')
         binary.seek(0)  # rewind the data
-        out = binary.buf
+        out = binary.read()
     else:
         plt.savefig(filename)
 
@@ -90,7 +90,7 @@ def add_date_color_bar(df):
 
     cb = plt.colorbar(mappable, ticks=ticker, shrink=0.75)
     cb.ax.set_yticklabels([df.index.values[i][1].strftime('%b %Y')
-                           for i in range(0, len(df.index.values), len(df.index.values) / (num_ticks + 2))])
+                           for i in range(0, len(df.index.values), len(df.index.values) // (num_ticks + 2))])
     cb.outline.set_linewidth(0)
 
 

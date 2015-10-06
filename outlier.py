@@ -75,9 +75,9 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
     knn.fit(data.values)
 
     # outlier nearest neighbors
-    outlier_values = outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).values
-    k_dist = knn.kneighbors(outlier_values)[0][0][-1]
-    ref_set_idx = knn.radius_neighbors(outlier_values, k_dist)[1][0]
+    outlier_values = outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).values.reshape(-1, 1).astype(float)
+    k_dist = knn.kneighbors(outlier_values.T)[0][0][-1]
+    ref_set_idx = knn.radius_neighbors(outlier_values.T, k_dist)[1][0]
 
     # distribution to supersample the outlier
     l = alpha * k_dist / np.sqrt(len(outlier_values))
@@ -90,7 +90,7 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
         random_inliers_idx = random.sample([x for x in range(len(data)) if x not in ref_set_idx], len(ref_set_idx))
 
         # supersample the outlier
-        outliers_sample = np.random.multivariate_normal(outlier_values, cov, len(ref_set_idx) + len(random_inliers_idx))
+        outliers_sample = np.random.multivariate_normal(outlier_values.reshape(-1), cov, len(ref_set_idx) + len(random_inliers_idx))
 
         # determine the relevant features by classifying the inliers versus the outliers
         x = np.vstack([[data.iloc[i] for i in itertools.chain(ref_set_idx, random_inliers_idx)], outliers_sample])

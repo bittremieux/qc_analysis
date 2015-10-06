@@ -30,6 +30,7 @@ except ImportError as exp:
 
     class GeneratedsSuper(object):
         tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
+        doEncoding = False
         class _FixedOffsetTZ(datetime_.tzinfo):
             def __init__(self, offset, name):
                 self.__offset = datetime_.timedelta(minutes=offset)
@@ -41,14 +42,18 @@ except ImportError as exp:
             def dst(self, dt):
                 return None
         def gds_format_string(self, input_data, input_name=''):
-            return input_data
+            # http://sourceforge.net/p/generateds/feature-requests/1/
+            if GeneratedsSuper.doEncoding:
+                return str(input_data.encode(ExternalEncoding))
+            else:
+                return input_data
         def gds_validate_string(self, input_data, node=None, input_name=''):
             if not input_data:
                 return ''
             else:
                 return input_data
         def gds_format_base64(self, input_data, input_name=''):
-            return base64.b64encode(input_data)
+            return base64.b64encode(input_data).decode('utf-8')
         def gds_validate_base64(self, input_data, node=None, input_name=''):
             return input_data
         def gds_format_integer(self, input_data, input_name=''):
@@ -324,7 +329,7 @@ except ImportError as exp:
             return None
         @classmethod
         def gds_reverse_node_mapping(cls, mapping):
-            return dict(((v, k) for k, v in mapping.iteritems()))
+            return dict(((v, k) for k, v in mapping.items()))
 
 
 #
@@ -367,7 +372,7 @@ def quote_xml(inStr):
     "Escape markup chars, but do not modify CDATA sections."
     if not inStr:
         return ''
-    s1 = (isinstance(inStr, basestring) and inStr or
+    s1 = (isinstance(inStr, str) and inStr or
           '%s' % inStr)
     s2 = ''
     pos = 0
@@ -390,7 +395,7 @@ def quote_xml_aux(inStr):
 
 
 def quote_attrib(inStr):
-    s1 = (isinstance(inStr, basestring) and inStr or
+    s1 = (isinstance(inStr, str) and inStr or
           '%s' % inStr)
     s1 = s1.replace('&', '&amp;')
     s1 = s1.replace('<', '&lt;')
@@ -668,7 +673,7 @@ class qcMLType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='qcMLType'):
         if self.version is not None and 'version' not in already_processed:
             already_processed.add('version')
-            outfile.write(' version=%s' % (self.gds_format_string(quote_attrib(self.version).encode(ExternalEncoding), input_name='version'), ))
+            outfile.write(' version=%s' % (self.gds_format_string(quote_attrib(self.version), input_name='version'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='qcMLType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
@@ -881,7 +886,7 @@ class RunQualityAssessmentType(QualityAssessmentType):
         super(RunQualityAssessmentType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='RunQualityAssessmentType')
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='RunQualityAssessmentType', fromsubclass_=False, pretty_print=True):
         super(RunQualityAssessmentType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
     def build(self, node):
@@ -949,7 +954,7 @@ class SetQualityAssessmentType(QualityAssessmentType):
         super(SetQualityAssessmentType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='SetQualityAssessmentType')
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='SetQualityAssessmentType', fromsubclass_=False, pretty_print=True):
         super(SetQualityAssessmentType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
     def build(self, node):
@@ -1040,22 +1045,22 @@ class AbstractParamType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='AbstractParamType'):
         if self.name is not None and 'name' not in already_processed:
             already_processed.add('name')
-            outfile.write(' name=%s' % (self.gds_format_string(quote_attrib(self.name).encode(ExternalEncoding), input_name='name'), ))
+            outfile.write(' name=%s' % (self.gds_format_string(quote_attrib(self.name), input_name='name'), ))
         if self.unitName is not None and 'unitName' not in already_processed:
             already_processed.add('unitName')
-            outfile.write(' unitName=%s' % (self.gds_format_string(quote_attrib(self.unitName).encode(ExternalEncoding), input_name='unitName'), ))
+            outfile.write(' unitName=%s' % (self.gds_format_string(quote_attrib(self.unitName), input_name='unitName'), ))
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
-            outfile.write(' value=%s' % (self.gds_format_string(quote_attrib(self.value).encode(ExternalEncoding), input_name='value'), ))
+            outfile.write(' value=%s' % (self.gds_format_string(quote_attrib(self.value), input_name='value'), ))
         if self.unitAccession is not None and 'unitAccession' not in already_processed:
             already_processed.add('unitAccession')
-            outfile.write(' unitAccession=%s' % (self.gds_format_string(quote_attrib(self.unitAccession).encode(ExternalEncoding), input_name='unitAccession'), ))
+            outfile.write(' unitAccession=%s' % (self.gds_format_string(quote_attrib(self.unitAccession), input_name='unitAccession'), ))
         if self.unitCvRef is not None and 'unitCvRef' not in already_processed:
             already_processed.add('unitCvRef')
-            outfile.write(' unitCvRef=%s' % (self.gds_format_string(quote_attrib(self.unitCvRef).encode(ExternalEncoding), input_name='unitCvRef'), ))
+            outfile.write(' unitCvRef=%s' % (self.gds_format_string(quote_attrib(self.unitCvRef), input_name='unitCvRef'), ))
         if self.description is not None and 'description' not in already_processed:
             already_processed.add('description')
-            outfile.write(' description=%s' % (self.gds_format_string(quote_attrib(self.description).encode(ExternalEncoding), input_name='description'), ))
+            outfile.write(' description=%s' % (self.gds_format_string(quote_attrib(self.description), input_name='description'), ))
         if self.extensiontype_ is not None and 'xsi:type' not in already_processed:
             already_processed.add('xsi:type')
             outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
@@ -1156,10 +1161,10 @@ class CVParamType(AbstractParamType):
         super(CVParamType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='CVParamType')
         if self.cvRef is not None and 'cvRef' not in already_processed:
             already_processed.add('cvRef')
-            outfile.write(' cvRef=%s' % (self.gds_format_string(quote_attrib(self.cvRef).encode(ExternalEncoding), input_name='cvRef'), ))
+            outfile.write(' cvRef=%s' % (self.gds_format_string(quote_attrib(self.cvRef), input_name='cvRef'), ))
         if self.accession is not None and 'accession' not in already_processed:
             already_processed.add('accession')
-            outfile.write(' accession=%s' % (self.gds_format_string(quote_attrib(self.accession).encode(ExternalEncoding), input_name='accession'), ))
+            outfile.write(' accession=%s' % (self.gds_format_string(quote_attrib(self.accession), input_name='accession'), ))
         if self.extensiontype_ is not None and 'xsi:type' not in already_processed:
             already_processed.add('xsi:type')
             outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
@@ -1258,7 +1263,7 @@ class QualityParameterType(CVParamType):
             outfile.write(' flag="%s"' % self.gds_format_boolean(self.flag, input_name='flag'))
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='QualityParameterType', fromsubclass_=False, pretty_print=True):
         super(QualityParameterType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
         if pretty_print:
@@ -1360,10 +1365,10 @@ class AttachmentType(CVParamType):
         super(AttachmentType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='AttachmentType')
         if self.qualityParameterRef is not None and 'qualityParameterRef' not in already_processed:
             already_processed.add('qualityParameterRef')
-            outfile.write(' qualityParameterRef=%s' % (self.gds_format_string(quote_attrib(self.qualityParameterRef).encode(ExternalEncoding), input_name='qualityParameterRef'), ))
+            outfile.write(' qualityParameterRef=%s' % (self.gds_format_string(quote_attrib(self.qualityParameterRef), input_name='qualityParameterRef'), ))
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='AttachmentType', fromsubclass_=False, pretty_print=True):
         super(AttachmentType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
         if pretty_print:
@@ -1475,10 +1480,10 @@ class TableType(GeneratedsSuper):
             eol_ = ''
         if self.tableColumnTypes is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%stableColumnTypes>%s</%stableColumnTypes>%s' % (namespace_, self.gds_format_string(quote_xml(' '.join(self.tableColumnTypes)).encode(ExternalEncoding), input_name='tableColumnTypes'), namespace_, eol_))
+            outfile.write('<%stableColumnTypes>%s</%stableColumnTypes>%s' % (namespace_, self.gds_format_string(quote_xml(' '.join(self.tableColumnTypes)), input_name='tableColumnTypes'), namespace_, eol_))
         for tableRowValues_ in self.tableRowValues:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<%stableRowValues>%s</%stableRowValues>%s' % (namespace_, self.gds_format_string(quote_xml(tableRowValues_).encode(ExternalEncoding), input_name='tableRowValues'), namespace_, eol_))
+            outfile.write('<%stableRowValues>%s</%stableRowValues>%s' % (namespace_, self.gds_format_string(quote_xml(tableRowValues_), input_name='tableRowValues'), namespace_, eol_))
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1629,16 +1634,16 @@ class CVType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='CVType'):
         if self.fullName is not None and 'fullName' not in already_processed:
             already_processed.add('fullName')
-            outfile.write(' fullName=%s' % (self.gds_format_string(quote_attrib(self.fullName).encode(ExternalEncoding), input_name='fullName'), ))
+            outfile.write(' fullName=%s' % (self.gds_format_string(quote_attrib(self.fullName), input_name='fullName'), ))
         if self.version is not None and 'version' not in already_processed:
             already_processed.add('version')
-            outfile.write(' version=%s' % (self.gds_format_string(quote_attrib(self.version).encode(ExternalEncoding), input_name='version'), ))
+            outfile.write(' version=%s' % (self.gds_format_string(quote_attrib(self.version), input_name='version'), ))
         if self.uri is not None and 'uri' not in already_processed:
             already_processed.add('uri')
-            outfile.write(' uri=%s' % (self.gds_format_string(quote_attrib(self.uri).encode(ExternalEncoding), input_name='uri'), ))
+            outfile.write(' uri=%s' % (self.gds_format_string(quote_attrib(self.uri), input_name='uri'), ))
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='CVType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
@@ -1782,7 +1787,7 @@ class thresholdType(CVParamType):
         super(thresholdType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='thresholdType')
         if self.thresholdFilename is not None and 'thresholdFilename' not in already_processed:
             already_processed.add('thresholdFilename')
-            outfile.write(' thresholdFilename=%s' % (self.gds_format_string(quote_attrib(self.thresholdFilename).encode(ExternalEncoding), input_name='thresholdFilename'), ))
+            outfile.write(' thresholdFilename=%s' % (self.gds_format_string(quote_attrib(self.thresholdFilename), input_name='thresholdFilename'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='thresholdType', fromsubclass_=False, pretty_print=True):
         super(thresholdType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
         pass
@@ -1850,7 +1855,7 @@ class MetaDataType(CVParamType):
         super(MetaDataType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='MetaDataType')
         if self.ID is not None and 'ID' not in already_processed:
             already_processed.add('ID')
-            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID).encode(ExternalEncoding), input_name='ID'), ))
+            outfile.write(' ID=%s' % (self.gds_format_string(quote_attrib(self.ID), input_name='ID'), ))
     def exportChildren(self, outfile, level, namespace_='', name_='MetaDataType', fromsubclass_=False, pretty_print=True):
         super(MetaDataType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
         pass
@@ -1952,7 +1957,7 @@ def parseEtree(inFileName, silence=False):
 
 
 def parseString(inString, silence=False):
-    from StringIO import StringIO
+    from io import StringIO
     parser = None
     doc = parsexml_(StringIO(inString), parser)
     rootNode = doc.getroot()
