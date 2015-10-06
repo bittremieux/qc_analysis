@@ -3,7 +3,7 @@ Analysis of mass spectrometry quality control metrics
 
 For more information:
 
-* [Official website](https://bitbucket.org/proteinspector/qc_outlier/)
+* [Official code website](https://bitbucket.org/proteinspector/qc_outlier/)
 
 This tool analyzes the quality of mass spectrometry experiments based on their quality control metrics.
 
@@ -52,11 +52,8 @@ Application
                             the minimum support for subspace frequent itemset
                             mining (default: 5) positive numbers are interpreted
                             as percentages, negative numbers as absolute supports
-      --min_length MIN_LENGTH, -len MIN_LENGTH
-                            the minimum length each subspace itemset should be
-                            (default: 1)
 
-The only **required** parameters are the QC metrics input file, the qcML output file, and the number of neighbors used for detecting outlying experiments (--k_neighbors / -k).
+The only **required** parameters are the QC metrics input file, the qcML output file, and the number of neighbors used for detecting outlying experiments (`--k_neighbors` / `-k`).
 
 The other parameters are optional and can be used to optimize the analyses, however, the default values should function adequately in most situations.
 
@@ -76,7 +73,7 @@ The first two columns containing the filename and the experiment date are **mand
 
 Subsequent columns specify the values for the various metrics. All metrics should have only **numeric** values. There is no restriction on the number of metrics columns or the denomination of the metrics column headers.
 
-Files adhering to this format can be generated directly using [QuaMeter](http://pubs.acs.org/doi/abs/10.1021/ac300629p).
+Files adhering to this format can be generated directly using [QuaMeter](http://pubs.acs.org/doi/abs/10.1021/ac300629p) (available via [ProteoWizard](http://proteowizard.sourceforge.net/)).
 
 Output file format
 ------------------
@@ -86,17 +83,7 @@ The result of the analysis is exported to a qcML file, which can be viewed in an
 Dependencies
 ------------
 
-Several Python libraries are required, with their minimal version garantueed to work as listed below:
-
-* [lxml](http://lxml.de/) 3.4.4
-* [matplotlib](http://matplotlib.org/) 1.4.3
-* [NumPy](http://www.numpy.org/) 1.9.2
-* [pandas](http://pandas.pydata.org/) 0.16.0
-* [PyFIM](http://www.borgelt.net/pyfim.html) 6.12
-* [Seaborn](https://web.stanford.edu/~mwaskom/software/seaborn/) 0.6.0
-* [scikit-learn](http://scikit-learn.org/) 0.17.dev
-* [SciPy](https://www.scipy.org/) 0.15.1
-* [sklearn-pandas](https://github.com/paulgb/sklearn-pandas) 0.0.10
+Although Python 3 is recommended, the software has been tested and should work under Python 2.7 as well. The required modules are available in the file `requirements.txt`.
 
 Contact
 -------
