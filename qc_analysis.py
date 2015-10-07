@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing
 
 import pandas as pd
 import pymining.itemmining as im
@@ -52,13 +53,20 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
     # retrieve explanatory subspaces for each outlier
     outliers['FeatureImportance'] = object
     outliers['Subspace'] = object
-    for name, this_outlier in outliers.iterrows():
-        feature_importance, subspace = outlier.get_outlier_subspace(data_including_outliers, this_outlier, k)
-        outliers.set_value(name, 'FeatureImportance', feature_importance.values)
-        outliers.set_value(name, 'Subspace', subspace)
+    with multiprocessing.Pool() as pool:
+        # compute the subspace for each outlier
+        subspaces = {name: pool.apply_async(outlier.get_outlier_subspace, (data_including_outliers, this_outlier, k))
+                     for name, this_outlier in outliers.iterrows()}
 
-        # add the outlier to the qcML export
-        exporter.outlier(outliers.loc[name], data)
+        # set the outlier subspaces
+        for name, result in subspaces.items():
+            feature_importance, subspace = result.get()
+            outliers.set_value(name, 'FeatureImportance', feature_importance.values)
+            outliers.set_value(name, 'Subspace', subspace)
+
+    # add the outliers to the qcML export
+    for name, this_outlier in outliers.iterrows():
+        exporter.outlier(this_outlier, data)
 
     return data, outliers
 
