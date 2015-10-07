@@ -85,7 +85,7 @@ The result of the analysis is exported to a qcML file, which can be viewed in an
 Dependencies
 ------------
 
-Although Python 3 is recommended, the software has been tested and should work under Python 2.7 as well. The required modules are available in the file `requirements.txt`.
+Python 3.3 or higher is required to run the software. The required external modules are available in the file `requirements.txt`.
 
 Contact
 -------
