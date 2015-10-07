@@ -107,8 +107,8 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
     psm_table = pd.DataFrame(index=psms.index)
     psm_table['\\bfseries Inliers'] = inlier_psms
     pval_table = pd.DataFrame(index=range(len(frequent_subspaces)), columns=['Metric(s)', 'Number of outliers', '\emph{p}-value'])
-    for i, (subspace, (support,)) in enumerate(frequent_subspaces):
-        subspace = map(None, subspace)
+    for i, (subspace, support) in enumerate(frequent_subspaces):
+        subspace = sorted(subspace)
 
         # compare outlier values
         outliers_values = pd.DataFrame([this_outlier for _, this_outlier in outliers.iterrows() if set(subspace) <= set(this_outlier.Subspace)])
