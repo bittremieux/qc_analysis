@@ -126,6 +126,51 @@ def visualize_tsne(df, filename=None):
     return scatter_plot(tsne_data, df, filename)
 
 
+def scatter_plot_outliers(scatter_data, df, outlier_scores, score_threshold, filename=None):
+    plt.figure()
+
+    colors = classes_to_colors(df)
+
+    for i, d in enumerate(scatter_data):
+        if outlier_scores[i] > score_threshold:
+            size = 10 + (outlier_scores[i] - score_threshold) * 200
+            color = colors[i]
+            marker = 'o'
+            alpha = None
+        else:
+            size = 10
+            color = 'grey'
+            marker = '.'
+            alpha = 0.25
+        plt.scatter(d[0], d[1], s=size, c=color, marker=marker, alpha=alpha)
+
+    sns.despine(left=True, bottom=True)
+
+    plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+    plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
+
+    add_date_color_bar(df)
+
+    return output_figure(filename)
+
+
+def visualize_pca_outliers(df, outlier_scores, score_threshold, filename=None):
+    # transform data to lower dimension
+    pca = PCA(2)
+    pca_data = DataFrameMapper([(df.columns.values, pca)]).fit_transform(df)
+
+    # plot
+    return scatter_plot_outliers(pca_data, df, outlier_scores, score_threshold, filename)
+
+
+def visualize_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
+    # transform data to lower dimension
+    tsne_data = TSNE(2, init='pca').fit_transform(df.values)
+
+    # plot
+    return scatter_plot_outliers(tsne_data, df, outlier_scores, score_threshold, filename)
+
+
 def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=None):
     plt.figure()
 

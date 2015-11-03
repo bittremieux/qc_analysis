@@ -44,7 +44,7 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
         outlier_threshold = outlier.detect_outlier_score_threshold(outlier_scores, num_bins)
 
     # add the outlier score information to the qcML export
-    exporter.outlier_scores(outlier_scores, outlier_threshold, num_bins)
+    exporter.outlier_scores(data, outlier_scores, outlier_threshold, num_bins)
 
     # remove significant outliers
     data_including_outliers = data

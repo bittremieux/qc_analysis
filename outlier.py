@@ -55,7 +55,7 @@ def split_outliers(data, outlier_scores, outlier_threshold):
     outliers = data.iloc[outlier_idx].reindex()
     outliers.insert(len(outliers.columns), 'OutlierScore', outlier_scores[outlier_idx])
     # sort the outliers based on their scores
-    outliers.sort('OutlierScore', ascending=False, inplace=True)
+    outliers.sort_values('OutlierScore', ascending=False, inplace=True)
 
     # remove the outliers from the data
     data_excluding_outliers = data.drop(data.index[outlier_idx])
@@ -104,7 +104,7 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
 
 
 def get_relevant_subspace(feature_importances):
-    features_sorted = feature_importances.sort(ascending=False, inplace=False)
+    features_sorted = feature_importances.sort_values(ascending=False, inplace=False)
 
     subspace = []
     explained_importance = 0

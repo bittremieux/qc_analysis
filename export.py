@@ -130,7 +130,7 @@ class Exporter:
             with open('table_pca.txt', 'w') as f_out:
                 f_out.write(pca_loadings_table(pca, data.columns.values))
 
-    def outlier_scores(self, outlier_scores, outlier_threshold, num_bins):
+    def outlier_scores(self, data, outlier_scores, outlier_threshold, num_bins):
         if self.export_qcml:
             param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold,
                                                     cvRef=self.cv_outlier.get_ID(), accession='none')
@@ -146,6 +146,8 @@ class Exporter:
 
         if self.export_figures:
             visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='outlier-hist.pdf')
+            visualize.visualize_pca_outliers(data, outlier_scores, outlier_threshold, filename='pca-outlier.pdf')
+            visualize.visualize_tsne_outliers(data, outlier_scores, outlier_threshold, filename='tsne-outlier.pdf')
 
     def outlier(self, outlier, data):
         feature_importance = pd.Series(outlier['FeatureImportance'], index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
