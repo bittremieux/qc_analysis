@@ -6,6 +6,7 @@ from sklearn.preprocessing import RobustScaler, StandardScaler
 
 def load_metrics(file_in):
     metrics = pd.read_csv(file_in, '\t', index_col=0, parse_dates=[1])
+    metrics.fillna(0, inplace=True)
     metrics.set_index('StartTimeStamp', append=True, inplace=True)
     metrics.columns = [m.replace('_', '-') for m in metrics.columns.values]
 
