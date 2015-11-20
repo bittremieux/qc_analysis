@@ -24,6 +24,7 @@ def load_metrics(file_in, min_var, min_corr, scaling):
     # add the preprocessing results to the qcML export
     exporter.low_variance(pd.Series(variance, index=data_raw.columns.values), min_var)
     exporter.correlation(corr, min_corr)
+    exporter.preprocess_overview(data_raw.columns.values, variance, min_var, corr, min_corr)
 
     # add general visualizations to the qcML export
     exporter.global_visualization(data)

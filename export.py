@@ -2,26 +2,13 @@ import datetime
 import os
 import sqlite3
 
+import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn_pandas import DataFrameMapper
 
 import qcml
 import visualize
-
-
-def pca_loadings_table(pca, metrics):
-    pca_table = pd.DataFrame(index=range(len(metrics)), columns=['Metric', 0, 1])
-
-    pca_table['Metric'] = metrics
-    pca_table[0] = pca.components_[0]
-    pca_table[1] = pca.components_[1]
-    pca_table.columns = ['Metric',
-                         '{{PC 1 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[0] * 100),
-                         '{{PC 2 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[1] * 100)]
-
-    return pca_table.to_latex(index=False, escape=False, float_format=lambda x: '{}{:.5f}'.format(
-        '\cellcolor{gray} ' if abs(x) >= 0.4 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x))
 
 
 def extract_idp_psms_to_file(f_in, f_out):
@@ -108,6 +95,30 @@ class Exporter:
         if self.export_figures:
             visualize.visualize_correlation_matrix(corr, 'corr.pdf')
 
+    def preprocess_overview(self, metrics, variances, min_var, correlation, min_corr):
+        if self.export_figures:
+            with open('table_preprocess.txt', 'w') as f_out:
+                table = pd.DataFrame(index=range(len(metrics)), columns=['Metric', '{Variance}', 'Correlated Metric', '{Correlation (\%)}'])
+
+                table['Metric'] = metrics
+
+                table['{Variance}'] = variances
+
+                corr_features = set()
+                for row in range(len(correlation.index)):
+                    if correlation.columns.values[row] not in corr_features:
+                        for col in range(row + 1, len(correlation.columns)):
+                            if correlation.columns.values[col] not in corr_features and abs(correlation.iloc[row, col]) > min_corr:
+                                retained_metric = correlation.columns.values[row]
+                                removed_metric = correlation.columns.values[col]
+                                removed_idx = np.where(metrics == removed_metric)[0][0]
+                                corr_features.add(removed_metric)
+                                table.ix[removed_idx, '{Correlation (\%)}'] = '{:.4}'.format(correlation.iloc[row, col] * 100)
+                                table.ix[removed_idx, 'Correlated Metric'] = retained_metric
+
+                f_out.write(table.to_latex(index=False, escape=False, na_rep='',
+                                           formatters={'{Variance}': lambda x: '{}{:.2e}'.format('\cellcolor{gray} ' if x < min_var else '', x)}))
+
     def global_visualization(self, data):
         if self.export_qcml:
             self.set_quality.add_attachment(qcml.AttachmentType(name='Experiment execution time', ID='time',
@@ -127,8 +138,19 @@ class Exporter:
 
             pca = PCA(2)
             DataFrameMapper([(data.columns.values, pca)]).fit_transform(data)
+
             with open('table_pca.txt', 'w') as f_out:
-                f_out.write(pca_loadings_table(pca, data.columns.values))
+                pca_table = pd.DataFrame(index=range(len(data.columns.values)), columns=['Metric', 0, 1])
+
+                pca_table['Metric'] = data.columns.values
+                pca_table[0] = pca.components_[0]
+                pca_table[1] = pca.components_[1]
+                pca_table.columns = ['Metric',
+                                     '{{PC 1 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[0] * 100),
+                                     '{{PC 2 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[1] * 100)]
+
+                f_out.write(pca_table.to_latex(index=False, escape=False, float_format=lambda x: '{}{:.5f}'.format(
+                    '\cellcolor{gray} ' if abs(x) >= 0.4 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x)))
 
     def outlier_scores(self, data, outlier_scores, outlier_threshold, num_bins):
         if self.export_qcml:
