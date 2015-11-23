@@ -93,7 +93,7 @@ class Exporter:
                                                                 qualityParameterRef=param_corr.get_ID()))
 
         if self.export_figures:
-            visualize.visualize_correlation_matrix(corr, 'corr.pdf')
+            visualize.plot_correlation_matrix(corr, 'corr.pdf')
 
     def preprocess_overview(self, metrics, variances, min_var, correlation, min_corr):
         if self.export_figures:
@@ -122,19 +122,19 @@ class Exporter:
     def global_visualization(self, data):
         if self.export_qcml:
             self.set_quality.add_attachment(qcml.AttachmentType(name='Experiment execution time', ID='time',
-                                                                binary=visualize.visualize_timestamps(data, filename='__qcml_export__'),
+                                                                binary=visualize.plot_timestamps(data, filename='__qcml_export__'),
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
             self.set_quality.add_attachment(qcml.AttachmentType(name='PCA visualization', ID='PCA',
-                                                                binary=visualize.visualize_pca(data, filename='__qcml_export__'),
+                                                                binary=visualize.plot_pca(data, filename='__qcml_export__'),
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
             self.set_quality.add_attachment(qcml.AttachmentType(name='t-SNE visualization', ID='t-SNE',
-                                                                binary=visualize.visualize_tsne(data, filename='__qcml_export__'),
+                                                                binary=visualize.plot_tsne(data, filename='__qcml_export__'),
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
 
         if self.export_figures:
-            visualize.visualize_timestamps(data, filename='dates.pdf')
-            visualize.visualize_pca(data, filename='pca.pdf')
-            visualize.visualize_tsne(data, filename='tsne.pdf')
+            visualize.plot_timestamps(data, filename='dates.pdf')
+            visualize.plot_pca(data, filename='pca.pdf')
+            visualize.plot_tsne(data, filename='tsne.pdf')
 
             pca = PCA(2)
             DataFrameMapper([(data.columns.values, pca)]).fit_transform(data)
@@ -168,8 +168,8 @@ class Exporter:
 
         if self.export_figures:
             visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='outlier-hist.pdf')
-            visualize.visualize_pca_outliers(data, outlier_scores, outlier_threshold, filename='pca-outlier.pdf')
-            visualize.visualize_tsne_outliers(data, outlier_scores, outlier_threshold, filename='tsne-outlier.pdf')
+            visualize.plot_pca_outliers(data, outlier_scores, outlier_threshold, filename='pca-outlier.pdf')
+            visualize.plot_tsne_outliers(data, outlier_scores, outlier_threshold, filename='tsne-outlier.pdf')
 
     def outlier(self, outlier, data):
         feature_importance = pd.Series(outlier['FeatureImportance'], index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
@@ -187,8 +187,8 @@ class Exporter:
                                               cvRef=self.cv_outlier.get_ID(), accession='none')
             run_quality.add_qualityParameter(score)
 
-            fig_features = visualize.visualize_feature_importances(feature_importance, filename='__qcml_export__')
-            fig_subspace = visualize.visualize_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='__qcml_export__')
+            fig_features = visualize.plot_feature_importances(feature_importance, filename='__qcml_export__')
+            fig_subspace = visualize.plot_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='__qcml_export__')
 
             run_quality.add_attachment(qcml.AttachmentType(name='Feature importance', binary=fig_features,
                                                            ID='{}_FeatureImportance'.format(run_quality.get_ID()),
@@ -202,8 +202,8 @@ class Exporter:
         if self.export_figures:
             if not os.path.exists('./outlier/'):
                 os.makedirs('./outlier/')
-            visualize.visualize_feature_importances(feature_importance, filename='./outlier/{}_features.pdf'.format(outlier.name[0]))
-            visualize.visualize_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='./outlier/{}_subspace.pdf'.format(outlier.name[0]))
+            visualize.plot_feature_importances(feature_importance, filename='./outlier/{}_features.pdf'.format(outlier.name[0]))
+            visualize.plot_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='./outlier/{}_subspace.pdf'.format(outlier.name[0]))
 
     def frequent_outlier_subspaces(self, subspaces, min_sup):
         if self.export_qcml:
@@ -231,9 +231,9 @@ class Exporter:
             pass
 
         if self.export_figures:
-            visualize.visualize_psm_boxplots(pd.DataFrame({'Inliers ({})'.format(len(inlier_psms)): inlier_psms,
-                                                           'Outliers ({})'.format(len(outlier_psms)): outlier_psms}),
-                                             filename='psm_all.pdf')
+            visualize.plot_psm_boxplots(pd.DataFrame({'Inliers ({})'.format(len(inlier_psms)): inlier_psms,
+                                                      'Outliers ({})'.format(len(outlier_psms)): outlier_psms}),
+                                        filename='psm_all.pdf')
 
     def psm_pval(self, psms, pvals):
         if self.export_qcml:
@@ -244,7 +244,17 @@ class Exporter:
                 f_out.write(pvals.to_latex(index=False, escape=False,
                                            float_format=lambda x: '{}{:.5f}'.format('\cellcolor{lightgray} ' if x <= 0.05 else '', x)))
 
-        visualize.visualize_psm_boxplots(psms, orient='h', filename='psm_subspace.pdf')
+        visualize.plot_psm_boxplots(psms, orient='h', filename='psm_subspace.pdf')
+
+    def outlier_auc(self, aucs, k_range):
+        if self.export_figures:
+            visualize.plot_aucs(aucs, k_range, filename='auc.pdf')
+
+    def outlier_validation(self, outlier_scores, quality_classes, num_bins, validation_classes):
+        if self.export_figures:
+            visualize.plot_outlier_classes_score_hist(outlier_scores, quality_classes, num_bins, 'hist.pdf')
+            visualize.plot_roc(validation_classes, outlier_scores, 'roc.pdf')
+            visualize.plot_precision_recall(validation_classes, outlier_scores, 'precision-recall.pdf')
 
     def export(self, file_out):
         if self.export_qcml:

@@ -1,9 +1,12 @@
 import argparse
+import math
 import multiprocessing
 
+import numpy as np
 import pandas as pd
 import pymining.itemmining as im
 import scipy.stats as stats
+from sklearn.metrics import roc_auc_score
 
 import export
 import outlier
@@ -47,16 +50,19 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
     # add the outlier score information to the qcML export
     exporter.outlier_scores(data, outlier_scores, outlier_threshold, num_bins)
 
-    # remove significant outliers
-    data_including_outliers = data
-    data, outliers = outlier.split_outliers(data, outlier_scores, outlier_threshold)
+    # separate significant outliers
+    data_excluding_outliers, outliers = outlier.split_outliers(data, outlier_scores, outlier_threshold)
 
+    return outliers, outlier_scores
+
+
+def analyze_outliers(data, outliers, k, min_sup):
     # retrieve explanatory subspaces for each outlier
     outliers['FeatureImportance'] = object
     outliers['Subspace'] = object
     with multiprocessing.Pool() as pool:
         # compute the subspace for each outlier
-        subspaces = {name: pool.apply_async(outlier.get_outlier_subspace, (data_including_outliers, this_outlier, k))
+        subspaces = {name: pool.apply_async(outlier.get_outlier_subspace, (data, this_outlier, k))
                      for name, this_outlier in outliers.iterrows()}
 
         # set the outlier subspaces
@@ -65,14 +71,10 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
             outliers.set_value(name, 'FeatureImportance', feature_importance.values)
             outliers.set_value(name, 'Subspace', subspace)
 
-    # add the outliers to the qcML export
+    # add the outliers' subspaces to the export
     for name, this_outlier in outliers.iterrows():
         exporter.outlier(this_outlier, data)
 
-    return data, outliers
-
-
-def analyze_outliers(outliers, min_sup):
     # detect frequently occurring explanatory subspaces
     abs_sup = min_sup * -1 if min_sup < 0 else round(min_sup * len(outliers) // 100)
     frequent_subspaces = sorted(im.relim(im.get_relim_input(outliers.Subspace), min_support=abs_sup).items(), key=lambda x: x[1], reverse=True)
@@ -89,7 +91,7 @@ def analyze_outliers(outliers, min_sup):
 
 ##############################################################################
 
-# OUTLIER VALIDATION BY PSM COMPARISON (for the manuscript)
+# OUTLIER VALIDATION BY PSM COMPARISON
 
 def compare_outlier_psms(f_psms, outliers):
     # compare inliers and outliers based on their number of valid PSM's
@@ -127,6 +129,40 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
         pval_table.set_value(i, '\emph{p}-value', p_value)
 
     exporter.psm_pval(psm_table, pval_table)
+
+
+# OUTLIER VALIDATION USING PNNL EXPERT CLASSIFICATION
+
+def _quality_classes_to_binary(quality_classes):
+    # convert quality classes: 1 -> poor, 0 -> good/ok
+    # requires that NO unvalidated samples are present
+    return [1 if q == 'poor' else 0 for q in quality_classes]
+
+
+def find_optimal_outliers_k(data, f_class, k_min, dist):
+    true_classes = _quality_classes_to_binary(pd.Series.from_csv(f_class))
+    k_range = np.arange(k_min, math.ceil(len(data) / 2), dtype=int)
+
+    aucs = []
+    for k in k_range:
+        outlier_scores = outlier.detect_outliers_loop(data, k, metric=dist)
+        aucs.append(roc_auc_score(true_classes, outlier_scores))
+    max_auc = max(aucs)
+    max_idx = [i for i, m in enumerate(aucs) if m == max_auc]
+
+    exporter.outlier_auc(aucs, k_range)
+
+    return max_idx, max_auc
+
+
+def validate_outlier_score(f_class, scores, num_bins=20):
+    quality_classes = pd.Series.from_csv(f_class)
+
+    # convert quality classes: 1 -> poor, 0 -> good/ok
+    # requires that NO unvalidated samples are present
+    true_classes = [1 if q == 'poor' else 0 for q in quality_classes]
+
+    exporter.outlier_validation(scores, quality_classes, num_bins, true_classes)
 
 
 ##############################################################################
@@ -168,8 +204,8 @@ def run(args):
     exporter = export.Exporter(True, False)
 
     data = load_metrics(args.file_in, args.min_var, args.min_corr, args.scaling_mode)
-    data_excluding_outliers, outliers = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
-    frequent_subspaces = analyze_outliers(outliers, args.min_sup)
+    outliers, outliers_score = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
+    analyze_outliers(data, outliers, args.k_neighbors, args.min_sup)
 
     exporter.export(args.file_out)
 

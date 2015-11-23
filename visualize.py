@@ -5,9 +5,11 @@ mpl.use('Agg')
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 from sklearn_pandas import DataFrameMapper
 
 
@@ -15,7 +17,7 @@ sns.set_context('paper')
 sns.set_style('white')
 
 
-def output_figure(filename):
+def _output_figure(filename):
     out = None
 
     if filename is None:
@@ -34,7 +36,7 @@ def output_figure(filename):
 
 
 # Remember to use the Agg matplotlib backend for the heatmap annotation to work!
-def visualize_correlation_matrix(corr, filename=None):
+def plot_correlation_matrix(corr, filename=None):
     plt.figure(figsize=(11, 10))
 
     # generate a mask for the upper triangle
@@ -49,10 +51,10 @@ def visualize_correlation_matrix(corr, filename=None):
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
 
-    return output_figure(filename)
+    return _output_figure(filename)
 
 
-def classes_to_colors(df):
+def _classes_to_colors(df):
     cmap = plt.cm.get_cmap('autumn')(np.linspace(0, 1, len(df.index.levels[0])))
 
     class_colors = {}
@@ -69,19 +71,19 @@ def classes_to_colors(df):
     return colors
 
 
-def visualize_timestamps(df, filename=None):
+def plot_timestamps(df, filename=None):
     plt.figure()
 
-    plt.scatter(df.index.get_level_values(1), [0] * len(df.index.get_level_values(1)), 500, classes_to_colors(df), '|')
+    plt.scatter(df.index.get_level_values(1), [0] * len(df.index.get_level_values(1)), 500, _classes_to_colors(df), '|')
 
     sns.despine(left=True)
 
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
 
-    return output_figure(filename)
+    return _output_figure(filename)
 
 
-def add_date_color_bar(df):
+def _add_date_color_bar(df):
     num_ticks = 5
     ticker = mpl.ticker.MaxNLocator(num_ticks + 2, prune='both')
 
@@ -94,42 +96,42 @@ def add_date_color_bar(df):
     cb.outline.set_linewidth(0)
 
 
-def scatter_plot(scatter_data, df, filename=None):
+def _scatter_plot(scatter_data, df, filename=None):
     plt.figure()
 
-    plt.scatter(scatter_data[:, 0], scatter_data[:, 1], c=classes_to_colors(df))
+    plt.scatter(scatter_data[:, 0], scatter_data[:, 1], c=_classes_to_colors(df))
 
     sns.despine(left=True, bottom=True)
 
     plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
 
-    add_date_color_bar(df)
+    _add_date_color_bar(df)
 
-    return output_figure(filename)
+    return _output_figure(filename)
 
 
-def visualize_pca(df, filename=None):
+def plot_pca(df, filename=None):
     # transform data to lower dimension
     pca = PCA(2)
     pca_data = DataFrameMapper([(df.columns.values, pca)]).fit_transform(df)
 
     # plot
-    return scatter_plot(pca_data, df, filename)
+    return _scatter_plot(pca_data, df, filename)
 
 
-def visualize_tsne(df, filename=None):
+def plot_tsne(df, filename=None):
     # transform data to lower dimension
     tsne_data = TSNE(2, init='pca').fit_transform(df.values)
 
     # plot
-    return scatter_plot(tsne_data, df, filename)
+    return _scatter_plot(tsne_data, df, filename)
 
 
-def scatter_plot_outliers(scatter_data, df, outlier_scores, score_threshold, filename=None):
+def scatter_outliers(scatter_data, df, outlier_scores, score_threshold, filename=None):
     plt.figure()
 
-    colors = classes_to_colors(df)
+    colors = _classes_to_colors(df)
 
     for i, d in enumerate(scatter_data):
         if outlier_scores[i] > score_threshold:
@@ -149,26 +151,26 @@ def scatter_plot_outliers(scatter_data, df, outlier_scores, score_threshold, fil
     plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
 
-    add_date_color_bar(df)
+    _add_date_color_bar(df)
 
-    return output_figure(filename)
+    return _output_figure(filename)
 
 
-def visualize_pca_outliers(df, outlier_scores, score_threshold, filename=None):
+def plot_pca_outliers(df, outlier_scores, score_threshold, filename=None):
     # transform data to lower dimension
     pca = PCA(2)
     pca_data = DataFrameMapper([(df.columns.values, pca)]).fit_transform(df)
 
     # plot
-    return scatter_plot_outliers(pca_data, df, outlier_scores, score_threshold, filename)
+    return scatter_outliers(pca_data, df, outlier_scores, score_threshold, filename)
 
 
-def visualize_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
+def plot_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
     # transform data to lower dimension
     tsne_data = TSNE(2, init='pca').fit_transform(df.values)
 
     # plot
-    return scatter_plot_outliers(tsne_data, df, outlier_scores, score_threshold, filename)
+    return scatter_outliers(tsne_data, df, outlier_scores, score_threshold, filename)
 
 
 def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=None):
@@ -182,10 +184,10 @@ def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=Non
 
     sns.despine()
 
-    return output_figure(filename)
+    return _output_figure(filename)
 
 
-def visualize_feature_importances(feature_importances, filename=None):
+def plot_feature_importances(feature_importances, filename=None):
     feature_importances.sort(ascending=False)
 
     with sns.axes_style('whitegrid'):
@@ -196,10 +198,10 @@ def visualize_feature_importances(feature_importances, filename=None):
 
         plt.xticks(rotation='vertical', fontsize=5)
 
-        return output_figure(filename)
+        return _output_figure(filename)
 
 
-def visualize_subspace_boxplots(data, highlights=None, filename=None):
+def plot_subspace_boxplots(data, highlights=None, filename=None):
     with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
@@ -212,10 +214,10 @@ def visualize_subspace_boxplots(data, highlights=None, filename=None):
 
         plt.xticks(rotation=30, fontsize=10)
 
-        return output_figure(filename)
+        return _output_figure(filename)
 
 
-def visualize_psm_boxplots(data, filename=None, **kwargs):
+def plot_psm_boxplots(data, filename=None, **kwargs):
     mpl.rc('text', usetex=True)
     mpl.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 
@@ -225,4 +227,85 @@ def visualize_psm_boxplots(data, filename=None, **kwargs):
 
         sns.boxplot(data=data, **kwargs)
 
-        return output_figure(filename)
+        return _output_figure(filename)
+
+
+def plot_aucs(aucs, k_range, filename=None):
+    max_auc = max(aucs)
+    max_idx = [i for i, m in enumerate(aucs) if m == max_auc]
+
+    plt.figure()
+
+    # plot all auc's
+    plt.plot(k_range, aucs)
+    # highlight max auc
+    for i in max_idx:
+        plt.scatter(k_range[i], max_auc, s=50, c=sns.color_palette()[0], marker='D')
+
+    plt.xlim(xmin=0)
+    plt.ylim([0.5, 1.0])
+
+    return _output_figure(filename)
+
+
+def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
+    # generate the histogram values for the three classes
+    bins = np.arange(0.0, 1.001, 1 / num_bins)
+    hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'], bins=bins)
+    hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'], bins=bins)
+    hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'], bins=bins)
+    hist = pd.DataFrame({'good': hist_good, 'ok': hist_ok, 'poor': hist_poor}, bins[:-1])
+
+    plt.figure()
+
+    ax = hist.plot(kind='bar', position=0)
+    # change the x-axis to not include each bin value
+    ax.xaxis.set_ticks(range(0, 21, 4))
+    ax.xaxis.set_ticklabels(np.arange(0, 1.1, 0.2), rotation=0)
+
+    return _output_figure(filename)
+
+
+def plot_roc(true_classes, predicted_scores, filename=None):
+    # compute false positive rate and true positive rate
+    fpr, tpr, _ = roc_curve(true_classes, predicted_scores)
+
+    plt.figure()
+
+    # plot the ROC curve
+    plt.plot(fpr, tpr, label='ROC curve (AUC = {0:.2f})'.format(auc(fpr, tpr)))
+
+    # plot the random ROC curve at 0.5
+    plt.plot([0, 1], [0, 1], 'k--')
+
+    plt.xlim([0.0, 1.05])
+    plt.ylim([0.0, 1.05])
+
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+
+    plt.legend(loc='lower right')
+
+    return _output_figure(filename)
+
+
+def plot_precision_recall(true_classes, predicted_scores, filename=None):
+    # compute false positive rate and true positive rate
+    precision, recall, _ = precision_recall_curve(true_classes, predicted_scores)
+
+    plt.figure()
+
+    # plot the ROC curve
+    plt.plot(recall, precision, label='Precision-recall curve (average precision = {0:.2f})'
+             .format(average_precision_score(true_classes, predicted_scores)))
+
+    plt.xlim([0.0, 1.05])
+    plt.ylim([0.0, 1.05])
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+
+    plt.legend(loc='lower right')
+
+    return _output_figure(filename)
+
