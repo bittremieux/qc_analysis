@@ -26,11 +26,18 @@ def extract_idp_psms_to_file(f_in, f_out):
 
 class Exporter:
 
-    def __init__(self, export_qcml=True, export_figures=False):
+    def __init__(self, export_qcml=True, export_figures=False, fig_folder=None):
         self.export_qcml = export_qcml
         self.export_figures = export_figures
+        self.fig_folder = fig_folder
 
         self.creation_date = datetime.datetime.now()
+
+        if export_figures and self.fig_folder is not None:
+            if not os.path.exists(self.fig_folder):
+                os.makedirs(self.fig_folder)
+        elif export_figures:
+            self.fig_folder = os.getcwd()
 
         if self.export_qcml:
             # create qcML
@@ -93,11 +100,11 @@ class Exporter:
                                                                 qualityParameterRef=param_corr.get_ID()))
 
         if self.export_figures:
-            visualize.plot_correlation_matrix(corr, 'corr.pdf')
+            visualize.plot_correlation_matrix(corr, os.path.join(self.fig_folder, 'corr.pdf'))
 
     def preprocess_overview(self, metrics, variances, min_var, correlation, min_corr):
         if self.export_figures:
-            with open('table_preprocess.txt', 'w') as f_out:
+            with open(os.path.join(self.fig_folder, 'table_preprocess.txt'), 'w') as f_out:
                 table = pd.DataFrame(index=range(len(metrics)), columns=['Metric', '{Variance}', 'Correlated Metric', '{Correlation (\%)}'])
 
                 table['Metric'] = metrics
@@ -132,14 +139,14 @@ class Exporter:
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
 
         if self.export_figures:
-            visualize.plot_timestamps(data, filename='dates.pdf')
-            visualize.plot_pca(data, filename='pca.pdf')
-            visualize.plot_tsne(data, filename='tsne.pdf')
+            visualize.plot_timestamps(data, filename=os.path.join(self.fig_folder, 'dates.pdf'))
+            visualize.plot_pca(data, filename=os.path.join(self.fig_folder, 'pca.pdf'))
+            visualize.plot_tsne(data, filename=os.path.join(self.fig_folder, 'tsne.pdf'))
 
             pca = PCA(2)
             DataFrameMapper([(data.columns.values, pca)]).fit_transform(data)
 
-            with open('table_pca.txt', 'w') as f_out:
+            with open(os.path.join(self.fig_folder, 'table_pca.txt'), 'w') as f_out:
                 pca_table = pd.DataFrame(index=range(len(data.columns.values)), columns=['Metric', 0, 1])
 
                 pca_table['Metric'] = data.columns.values
@@ -150,7 +157,7 @@ class Exporter:
                                      '{{PC 2 ({:.1f}\,\%)}}'.format(pca.explained_variance_ratio_[1] * 100)]
 
                 f_out.write(pca_table.to_latex(index=False, escape=False, float_format=lambda x: '{}{:.5f}'.format(
-                    '\cellcolor{gray} ' if abs(x) >= 0.4 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x)))
+                    '\cellcolor{gray} ' if abs(x) >= 0.3 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x)))
 
     def outlier_scores(self, data, outlier_scores, outlier_threshold, num_bins):
         if self.export_qcml:
@@ -167,9 +174,9 @@ class Exporter:
             self.set_quality.add_attachment(attach_hist)
 
         if self.export_figures:
-            visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename='outlier-hist.pdf')
-            visualize.plot_pca_outliers(data, outlier_scores, outlier_threshold, filename='pca-outlier.pdf')
-            visualize.plot_tsne_outliers(data, outlier_scores, outlier_threshold, filename='tsne-outlier.pdf')
+            visualize.plot_outlier_score_hist(outlier_scores, num_bins, outlier_threshold, filename=os.path.join(self.fig_folder, 'outlier-hist.pdf'))
+            visualize.plot_pca_outliers(data, outlier_scores, outlier_threshold, filename=os.path.join(self.fig_folder, 'pca-outlier.pdf'))
+            visualize.plot_tsne_outliers(data, outlier_scores, outlier_threshold, filename=os.path.join(self.fig_folder, 'tsne-outlier.pdf'))
 
     def outlier(self, outlier, data):
         feature_importance = pd.Series(outlier['FeatureImportance'], index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
@@ -200,10 +207,10 @@ class Exporter:
                                                            qualityParameterRef=score.get_ID()))
 
         if self.export_figures:
-            if not os.path.exists('./outlier/'):
-                os.makedirs('./outlier/')
-            visualize.plot_feature_importances(feature_importance, filename='./outlier/{}_features.pdf'.format(outlier.name[0]))
-            visualize.plot_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename='./outlier/{}_subspace.pdf'.format(outlier.name[0]))
+            if not os.path.exists(os.path.join(self.fig_folder, 'outlier/')):
+                os.makedirs(os.path.join(self.fig_folder, 'outlier/'))
+            visualize.plot_feature_importances(feature_importance, filename=os.path.join(self.fig_folder, 'outlier/{}_features.pdf'.format(outlier.name[0])))
+            visualize.plot_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename=os.path.join(self.fig_folder, 'outlier/{}_subspace.pdf'.format(outlier.name[0])))
 
     def frequent_outlier_subspaces(self, subspaces, min_sup):
         if self.export_qcml:
@@ -223,7 +230,7 @@ class Exporter:
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
 
         if self.export_figures:
-            with open('table_freq.txt', 'w') as f_out:
+            with open(os.path.join(self.fig_folder, 'table_freq.txt'), 'w') as f_out:
                 f_out.write(subspaces.to_latex(index=False))
 
     def psm(self, inlier_psms, outlier_psms):
@@ -233,28 +240,28 @@ class Exporter:
         if self.export_figures:
             visualize.plot_psm_boxplots(pd.DataFrame({'Inliers ({})'.format(len(inlier_psms)): inlier_psms,
                                                       'Outliers ({})'.format(len(outlier_psms)): outlier_psms}),
-                                        filename='psm_all.pdf')
+                                        filename=os.path.join(self.fig_folder, 'psm_all.pdf'))
 
     def psm_pval(self, psms, pvals):
         if self.export_qcml:
             pass
 
         if self.export_figures:
-            with open('table_psm_pval.txt', 'w') as f_out:
+            with open(os.path.join(self.fig_folder, 'table_psm_pval.txt'), 'w') as f_out:
                 f_out.write(pvals.to_latex(index=False, escape=False,
                                            float_format=lambda x: '{}{:.5f}'.format('\cellcolor{lightgray} ' if x <= 0.05 else '', x)))
 
-        visualize.plot_psm_boxplots(psms, orient='h', filename='psm_subspace.pdf')
+        visualize.plot_psm_boxplots(psms, orient='h', filename=os.path.join(self.fig_folder, 'psm_subspace.pdf'))
 
     def outlier_auc(self, aucs, k_range):
         if self.export_figures:
-            visualize.plot_aucs(aucs, k_range, filename='auc.pdf')
+            visualize.plot_aucs(aucs, k_range, filename=os.path.join(self.fig_folder, 'auc.pdf'))
 
     def outlier_validation(self, outlier_scores, quality_classes, num_bins, validation_classes):
         if self.export_figures:
-            visualize.plot_outlier_classes_score_hist(outlier_scores, quality_classes, num_bins, 'hist.pdf')
-            visualize.plot_roc(validation_classes, outlier_scores, 'roc.pdf')
-            visualize.plot_precision_recall(validation_classes, outlier_scores, 'precision-recall.pdf')
+            visualize.plot_outlier_classes_score_hist(outlier_scores, quality_classes, num_bins, os.path.join(self.fig_folder, 'outlier-hist-classes.pdf'))
+            visualize.plot_roc(validation_classes, outlier_scores, os.path.join(self.fig_folder, 'roc.pdf'))
+            visualize.plot_precision_recall(validation_classes, outlier_scores, os.path.join(self.fig_folder, 'precision-recall.pdf'))
 
     def export(self, file_out):
         if self.export_qcml:

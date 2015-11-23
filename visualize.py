@@ -250,7 +250,8 @@ def plot_aucs(aucs, k_range, filename=None):
 
 def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
     # generate the histogram values for the three classes
-    bins = np.arange(0.0, 1.001, 1 / num_bins)
+    outlier_scores *= 100   # percentage scores
+    bins = np.arange(0, 101, 100 / num_bins)
     hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'], bins=bins)
     hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'], bins=bins)
     hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'], bins=bins)
@@ -259,9 +260,13 @@ def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, f
     plt.figure()
 
     ax = hist.plot(kind='bar', position=0)
+
+    plt.xlabel('Outlier score (%)')
+    plt.ylabel('Number of experiments')
+
     # change the x-axis to not include each bin value
     ax.xaxis.set_ticks(range(0, 21, 4))
-    ax.xaxis.set_ticklabels(np.arange(0, 1.1, 0.2), rotation=0)
+    ax.xaxis.set_ticklabels(range(0, 101, 20), rotation=0)
 
     return _output_figure(filename)
 
@@ -278,8 +283,8 @@ def plot_roc(true_classes, predicted_scores, filename=None):
     # plot the random ROC curve at 0.5
     plt.plot([0, 1], [0, 1], 'k--')
 
-    plt.xlim([0.0, 1.05])
-    plt.ylim([0.0, 1.05])
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
 
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
@@ -299,8 +304,8 @@ def plot_precision_recall(true_classes, predicted_scores, filename=None):
     plt.plot(recall, precision, label='Precision-recall curve (average precision = {0:.2f})'
              .format(average_precision_score(true_classes, predicted_scores)))
 
-    plt.xlim([0.0, 1.05])
-    plt.ylim([0.0, 1.05])
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
 
     plt.xlabel('Recall')
     plt.ylabel('Precision')
