@@ -37,7 +37,7 @@ def detect_outlier_score_threshold(scores, num_bins):
     threshold = 0
     threshold_mean = 0
     for i, count in enumerate(hist):
-        if bin_edges[i] >= 0.5:
+        if bin_edges[i] >= 0.2:
             diff = float(hist[i - 1] - count) / len(scores)
             if diff > 0:
                 mean = gmean([diff, 1.0 / (count + 1), float(len(hist) - i) / len(hist)])
