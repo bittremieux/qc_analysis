@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
+from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
 from sklearn_pandas import DataFrameMapper
 
 
@@ -232,15 +232,15 @@ def plot_psm_boxplots(data, filename=None, **kwargs):
 
 def plot_aucs(aucs, k_range, filename=None):
     max_auc = max(aucs)
-    max_idx = [i for i, m in enumerate(aucs) if m == max_auc]
+    max_k = [k for k, a in zip(k_range, aucs) if a == max_auc]
 
     plt.figure()
 
     # plot all auc's
     plt.plot(k_range, aucs)
     # highlight max auc
-    for i in max_idx:
-        plt.scatter(k_range[i], max_auc, s=50, c=sns.color_palette()[0], marker='D')
+    for k in max_k:
+        plt.scatter(k, max_auc, s=50, c=sns.color_palette()[0], marker='D')
 
     plt.xlim(xmin=0)
     plt.ylim([0.5, 1.0])
@@ -273,7 +273,7 @@ def plot_roc(true_classes, predicted_scores, filename=None):
     plt.figure()
 
     # plot the ROC curve
-    plt.plot(fpr, tpr, label='ROC curve (AUC = {0:.2f})'.format(auc(fpr, tpr)))
+    plt.plot(fpr, tpr, label='ROC curve (AUC = {0:.2f})'.format(roc_auc_score(true_classes, predicted_scores)))
 
     # plot the random ROC curve at 0.5
     plt.plot([0, 1], [0, 1], 'k--')

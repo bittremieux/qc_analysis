@@ -149,19 +149,16 @@ def find_optimal_outliers_k(data, f_class, k_min, dist):
         outlier_scores = outlier.detect_outliers_loop(data, k, metric=dist)
         aucs.append(roc_auc_score(true_classes, outlier_scores))
     max_auc = max(aucs)
-    max_idx = [i for i, m in enumerate(aucs) if m == max_auc]
+    max_k = [k for k, auc in zip(k_range, aucs) if auc == max_auc]
 
     exporter.outlier_auc(aucs, k_range)
 
-    return max_idx, max_auc
+    return max_k, max_auc
 
 
-def validate_outlier_score(f_class, scores, num_bins=20):
+def validate_outlier_score(data, f_class, scores, num_bins=20):
     quality_classes = pd.Series.from_csv(f_class)
-
-    # convert quality classes: 1 -> poor, 0 -> good/ok
-    # requires that NO unvalidated samples are present
-    true_classes = [1 if q == 'poor' else 0 for q in quality_classes]
+    true_classes = _quality_classes_to_binary(data.index.get_level_values(0), quality_classes)
 
     exporter.outlier_validation(scores, quality_classes, num_bins, true_classes)
 
@@ -233,7 +230,7 @@ def generate_images(args, f_psms=None, f_class=None, k_min=2):
     if f_class is not None:
         optimal_ks, _ = find_optimal_outliers_k(data, f_class, k_min, args.distance)
         outliers, outliers_score = detect_outliers(data, optimal_ks[0], args.distance, args.min_outlier, args.num_bins)
-        validate_outlier_score(f_class, outliers_score, args.num_bins)
+        validate_outlier_score(data, f_class, outliers_score, args.num_bins)
 
 
 if __name__ == '__main__':
