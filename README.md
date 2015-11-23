@@ -71,9 +71,9 @@ The input file must be a tab-separated file containing the QC metrics, and must 
 
 The first row contains the headers, the subsequent rows each contain the metrics for a single experiment. Columns are separated by tabs and the column values should not contain spaces.
 
-The first two columns containing the filename and the experiment date are **mandatory**, and the filenames should be unique. Furthermore, the experiments should be **sorted** on experiment date. Also, the headers for these two columns need to be equal to 'Filename' and 'StartTimeStamp'.
+The first two columns containing the filename and the experiment date are **mandatory**, and the filenames should be unique. Furthermore, the headers for these two columns need to be equal to 'Filename' and 'StartTimeStamp'.
 
-Subsequent columns specify the values for the various metrics. All metrics should have only **numeric** values. There is no restriction on the number of metrics columns or the denomination of the metrics column headers.
+Subsequent columns specify the values for the various metrics. All metrics should consist of only **numeric** values. There is no restriction on the number of metrics columns or the denomination of the metrics column headers.
 
 Files adhering to this format can be generated directly using [QuaMeter](http://pubs.acs.org/doi/abs/10.1021/ac300629p) (available via [ProteoWizard](http://proteowizard.sourceforge.net/)).
 
