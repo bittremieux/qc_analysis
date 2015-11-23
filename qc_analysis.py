@@ -1,6 +1,7 @@
 import argparse
 import math
 import multiprocessing
+import shlex
 
 import numpy as np
 import pandas as pd
@@ -133,14 +134,14 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 
 # OUTLIER VALIDATION USING PNNL EXPERT CLASSIFICATION
 
-def _quality_classes_to_binary(quality_classes):
+def _quality_classes_to_binary(filenames, quality_classes):
     # convert quality classes: 1 -> poor, 0 -> good/ok
     # requires that NO unvalidated samples are present
-    return [1 if q == 'poor' else 0 for q in quality_classes]
+    return [1 if quality_classes[f] == 'poor' else 0 for f in filenames]
 
 
 def find_optimal_outliers_k(data, f_class, k_min, dist):
-    true_classes = _quality_classes_to_binary(pd.Series.from_csv(f_class))
+    true_classes = _quality_classes_to_binary(data.index.get_level_values(0), pd.Series.from_csv(f_class))
     k_range = np.arange(k_min, math.ceil(len(data) / 2), dtype=int)
 
     aucs = []
@@ -169,7 +170,8 @@ def validate_outlier_score(f_class, scores, num_bins=20):
 
 #  EXECUTE
 
-def parse_args():
+# command-line execution
+def parse_args(args_str=None):
     parser = argparse.ArgumentParser(description='Mass spectrometry quality control metrics analysis')
     parser.add_argument('file_in', type=argparse.FileType('r'),
                         help='the tab-separated input file containing the QC metrics')
@@ -196,7 +198,11 @@ def parse_args():
                              'positive numbers are interpreted as percentages, negative numbers as absolute supports')
 
     # parse command-line arguments
-    return parser.parse_args()
+    if args_str is None:
+        return parser.parse_args()
+    # or parse string arguments
+    else:
+        return parser.parse_args(shlex.split(args_str))
 
 
 def run(args):
@@ -210,7 +216,28 @@ def run(args):
     exporter.export(args.file_out)
 
 
+def generate_images(args, f_psms=None, f_class=None, k_min=2):
+    global exporter
+    exporter = export.Exporter(False, True)
+
+    data = load_metrics(args.file_in, args.min_var, args.min_corr, args.scaling_mode)
+
+    # compare outliers based on the number of psm's
+    if f_psms is not None:
+        outliers, outliers_score = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
+        frequent_subspaces = analyze_outliers(data, outliers, args.k_neighbors, args.min_sup)
+        psms, inlier_psms, outlier_psms = compare_outlier_psms(f_psms, outliers)
+        compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms)
+
+    # compare outliers based on manual expert evaluation
+    if f_class is not None:
+        optimal_ks, _ = find_optimal_outliers_k(data, f_class, k_min, args.distance)
+        outliers, outliers_score = detect_outliers(data, optimal_ks[0], args.distance, args.min_outlier, args.num_bins)
+        validate_outlier_score(f_class, outliers_score, args.num_bins)
+
+
 if __name__ == '__main__':
     run(parse_args())
+
 
 ##############################################################################

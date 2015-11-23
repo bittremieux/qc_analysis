@@ -188,13 +188,13 @@ def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=Non
 
 
 def plot_feature_importances(feature_importances, filename=None):
-    feature_importances.sort(ascending=False)
+    sorted_importances = feature_importances.sort_values(ascending=False)
 
     with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
-        sns.barplot(x=feature_importances.index.values, y=feature_importances, palette='Blues_d')
+        sns.barplot(x=sorted_importances.index.values, y=sorted_importances, palette='Blues_d')
 
         plt.xticks(rotation='vertical', fontsize=5)
 
