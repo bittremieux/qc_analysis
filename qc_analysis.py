@@ -3,9 +3,9 @@ import math
 import multiprocessing
 import shlex
 
+import fim
 import numpy as np
 import pandas as pd
-import pymining.itemmining as im
 import scipy.stats as stats
 from sklearn.metrics import roc_auc_score
 
@@ -77,13 +77,12 @@ def analyze_outliers(data, outliers, k, min_sup):
         exporter.outlier(this_outlier, data)
 
     # detect frequently occurring explanatory subspaces
-    abs_sup = min_sup * -1 if min_sup < 0 else min_sup * len(outliers) // 100
-    frequent_subspaces = sorted(im.relim(im.get_relim_input(outliers.Subspace), min_support=abs_sup).items(), key=lambda x: x[1], reverse=True)
+    frequent_subspaces = sorted(fim.fim(outliers.Subspace, supp=min_sup, report='S'), key=lambda x: x[1], reverse=True)
     frequent_subspaces_table = pd.DataFrame(index=range(len(frequent_subspaces)),
                                             columns=['Outlier subspace QC metric(s)', 'Support (%)'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
         frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
-        frequent_subspaces_table.set_value(i, 'Support (%)', support if min_sup < 0 else round(support * 100 / len(outliers)))
+        frequent_subspaces_table.set_value(i, 'Support (%)', int(support))
 
     exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup)
 

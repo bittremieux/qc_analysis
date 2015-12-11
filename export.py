@@ -224,7 +224,7 @@ class Exporter:
             self.set_quality.add_qualityParameter(param_support)
 
             values = ['{} {}'.format(subspace.iloc[0].replace(', ', '_'), subspace.iloc[1]) for _, subspace in subspaces.iterrows()]
-            table = qcml.TableType(tableColumnTypes=['Subspace', 'NrOutliers'], tableRowValues=values)
+            table = qcml.TableType(tableColumnTypes=['Subspace', 'Support(%)'], tableRowValues=values)
             self.set_quality.add_attachment(qcml.AttachmentType(name='Frequently occuring explanatory subspaces', ID='freq',
                                                                 table=table, qualityParameterRef=param_support.get_ID(),
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
