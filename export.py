@@ -242,7 +242,7 @@ class Exporter:
                                                       'Outliers ({})'.format(len(outlier_psms)): outlier_psms}),
                                         filename=os.path.join(self.fig_folder, 'psm_all.pdf'))
 
-    def psm_pval(self, psms, pvals):
+    def psm_pval(self, psms, pvals, color_classes):
         if self.export_qcml:
             pass
 
@@ -251,7 +251,7 @@ class Exporter:
                 f_out.write(pvals.to_latex(index=False, escape=False,
                                            float_format=lambda x: '{}{:.5f}'.format('\cellcolor{lightgray} ' if x <= 0.05 else '', x)))
 
-        visualize.plot_psm_boxplots(psms, orient='h', filename=os.path.join(self.fig_folder, 'psm_subspace.pdf'))
+            visualize.plot_psm_boxplots(psms, color_classes, orient='h', filename=os.path.join(self.fig_folder, 'psm_subspace.pdf'))
 
     def outlier_auc(self, aucs, k_range):
         if self.export_figures:

@@ -80,10 +80,10 @@ def analyze_outliers(data, outliers, k, min_sup):
     abs_sup = min_sup * -1 if min_sup < 0 else min_sup * len(outliers) // 100
     frequent_subspaces = sorted(im.relim(im.get_relim_input(outliers.Subspace), min_support=abs_sup).items(), key=lambda x: x[1], reverse=True)
     frequent_subspaces_table = pd.DataFrame(index=range(len(frequent_subspaces)),
-                                            columns=['Outlier subspace QC metric(s)', 'Number of outlying experiments'])
+                                            columns=['Outlier subspace QC metric(s)', 'Support (%)'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
         frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
-        frequent_subspaces_table.set_value(i, 'Number of outlying experiments', support)
+        frequent_subspaces_table.set_value(i, 'Support (%)', support if min_sup < 0 else round(support * 100 / len(outliers)))
 
     exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup)
 
@@ -110,6 +110,7 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
     # test whether a subspace can be related to a lower number of PSM's
     psm_table = pd.DataFrame(index=psms.index)
     psm_table['\\bfseries Inliers'] = inlier_psms
+    color_classes = [0]
     pval_table = pd.DataFrame(index=range(len(frequent_subspaces)), columns=['Metric(s)', 'Number of outliers', '\emph{p}-value'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
         subspace = sorted(subspace)
@@ -124,12 +125,13 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
         t_stat, p_value = stats.ttest_ind(inlier_psms.values, outlier_psms.values, equal_var=False)
 
         psm_table['{}{}'.format('\\itshape ' if p_value <= 0.05 else '', ', '.join(subspace))] = outlier_psms
+        color_classes.append(2 if p_value <= 0.05 else 1)
 
         pval_table.set_value(i, 'Metric(s)', ', '.join(subspace))
         pval_table.set_value(i, 'Number of outliers', support)
         pval_table.set_value(i, '\emph{p}-value', p_value)
 
-    exporter.psm_pval(psm_table, pval_table)
+    exporter.psm_pval(psm_table, pval_table, color_classes)
 
 
 # OUTLIER VALIDATION USING PNNL EXPERT CLASSIFICATION
@@ -213,9 +215,9 @@ def run(args):
     exporter.export(args.file_out)
 
 
-def generate_images(args, f_psms=None, f_class=None, k_min=2):
+def generate_images(args, f_psms=None, f_class=None, k_min=2, folder=None):
     global exporter
-    exporter = export.Exporter(False, True)
+    exporter = export.Exporter(False, True, folder)
 
     data = load_metrics(args.file_in, args.min_var, args.min_corr, args.scaling_mode)
 
@@ -231,6 +233,9 @@ def generate_images(args, f_psms=None, f_class=None, k_min=2):
         optimal_ks, _ = find_optimal_outliers_k(data, f_class, k_min, args.distance)
         outliers, outliers_score = detect_outliers(data, optimal_ks[0], args.distance, args.min_outlier, args.num_bins)
         validate_outlier_score(data, f_class, outliers_score, args.num_bins)
+        frequent_subspaces = analyze_outliers(data, outliers, optimal_ks[0], args.min_sup)
+
+    exporter.export(args.file_out)
 
 
 if __name__ == '__main__':

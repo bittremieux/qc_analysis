@@ -217,7 +217,7 @@ def plot_subspace_boxplots(data, highlights=None, filename=None):
         return _output_figure(filename)
 
 
-def plot_psm_boxplots(data, filename=None, **kwargs):
+def plot_psm_boxplots(data, color_classes=None, filename=None, **kwargs):
     mpl.rc('text', usetex=True)
     mpl.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 
@@ -225,7 +225,16 @@ def plot_psm_boxplots(data, filename=None, **kwargs):
         fig = plt.figure()
         fig.set_tight_layout(True)
 
+        # add specific colors to the various box plots
+        if color_classes is not None:
+            kwargs['palette'] = [sns.color_palette()[c] for c in color_classes]
+
         sns.boxplot(data=data, **kwargs)
+
+        if kwargs.get('orient') == 'h':
+            plt.xlabel('Number of PSM\'s')
+        else:
+            plt.ylabel('Number of PSM\'s')
 
         return _output_figure(filename)
 
@@ -245,6 +254,9 @@ def plot_aucs(aucs, k_range, filename=None):
     plt.xlim(xmin=0)
     plt.ylim([0.5, 1.0])
 
+    plt.xlabel('Local neighborhood size')
+    plt.ylabel('AUC')
+
     return _output_figure(filename)
 
 
@@ -263,6 +275,8 @@ def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, f
 
     plt.xlabel('Outlier score (%)')
     plt.ylabel('Number of experiments')
+
+    sns.despine(right=True, top=True)
 
     # change the x-axis to not include each bin value
     ax.xaxis.set_ticks(range(0, 21, 4))
