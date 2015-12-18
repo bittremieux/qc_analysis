@@ -138,7 +138,7 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 def _quality_classes_to_binary(filenames, quality_classes):
     # convert quality classes: 1 -> poor, 0 -> good/ok
     # requires that NO unvalidated samples are present
-    return [1 if quality_classes[f] == 'poor' else 0 for f in filenames]
+    return np.array([1 if quality_classes[f] == 'poor' else 0 for f in filenames])
 
 
 def find_optimal_outliers_k(data, f_class, k_min, dist):

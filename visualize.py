@@ -176,11 +176,14 @@ def plot_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
 def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=None):
     plt.figure()
 
-    sns.distplot(outlier_scores * 100, bins=num_bins, kde=False, axlabel='Outlier score (%)', hist_kws={'histtype': 'stepfilled'})
+    ax = sns.distplot(outlier_scores, bins=num_bins, kde=False, axlabel='Outlier score (%)', hist_kws={'histtype': 'stepfilled'})
     plt.ylabel('Number of experiments')
 
     if score_cutoff is not None:
-        plt.axvline(score_cutoff * 100, color=sns.color_palette()[0], linestyle='--')
+        plt.axvline(score_cutoff, color=sns.color_palette()[0], linestyle='--')
+
+    # convert axis labels to percentages
+    ax.set_xticklabels([int(100 * float(label)) for label in ax.get_xticks()])
 
     sns.despine()
 
@@ -262,8 +265,7 @@ def plot_aucs(aucs, k_range, filename=None):
 
 def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
     # generate the histogram values for the three classes
-    outlier_scores *= 100   # percentage scores
-    bins = np.arange(0, 101, 100 / num_bins)
+    bins = np.arange(0, 1.01, 1 / num_bins)
     hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'], bins=bins)
     hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'], bins=bins)
     hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'], bins=bins)
@@ -271,16 +273,16 @@ def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, f
 
     plt.figure()
 
-    ax = hist.plot(kind='bar', position=0)
+    ax = hist.plot(kind='bar', colormap=mpl.colors.ListedColormap(sns.color_palette('deep', 3)), position=0)
 
     plt.xlabel('Outlier score (%)')
     plt.ylabel('Number of experiments')
 
     sns.despine(right=True, top=True)
 
-    # change the x-axis to not include each bin value
-    ax.xaxis.set_ticks(range(0, 21, 4))
-    ax.xaxis.set_ticklabels(range(0, 101, 20), rotation=0)
+    # change the x-axis to not include each bin value and convert to percentages
+    ax.set_xticks(range(0, 21, 4))
+    ax.set_xticklabels(range(0, 101, 20), rotation=0)
 
     return _output_figure(filename)
 
@@ -328,3 +330,45 @@ def plot_precision_recall(true_classes, predicted_scores, filename=None):
 
     return _output_figure(filename)
 
+
+def plot_score_sensitivity_specificity(true_classes, predicted_scores, filename=None):
+    # compute sensitivity and specificity
+    sort_order = predicted_scores.argsort()[::-1]   # sort by descending outlier score
+    sorted_scores = predicted_scores[sort_order]
+    sorted_classes = true_classes[sort_order]
+
+    sensitivity, specificity = np.zeros(len(sorted_classes)), np.zeros(len(sorted_classes))
+    for i in range(len(sorted_classes)):
+        # true positives or false positives based on predictions above score cut-off
+        tp = np.count_nonzero(sorted_classes[:i + 1])
+        fp = (i + 1) - tp
+        # true negatives or false negatives based on predictions below score cut-off
+        fn = np.count_nonzero(sorted_classes[i + 1:])
+        tn = len(sorted_classes) - (i + 1) - fn
+
+        # sensitivity and specificity
+        sensitivity[i] = tn / (tn + fp)
+        specificity[i] = tp / (tp + fn)
+
+    plt.figure()
+    ax1 = plt.gca()
+    ax2 = plt.twinx()
+
+    # plot the sensitivity and specificity in function of the outlier score
+    p1 = ax1.plot(sorted_scores, sensitivity, label='Sensitivity')
+    # advance colors for the second axis
+    next(ax2._get_lines.prop_cycler)
+    p2 = ax2.plot(sorted_scores, specificity, label='Specificity')
+
+    ax1.set_xlim([-0.05, 1.05])
+    ax1.set_ylim([-0.05, 1.05])
+    ax2.set_ylim([-0.05, 1.05])
+
+    ax1.set_xlabel('Outlier score')
+    ax1.set_ylabel('Sensitivity')
+    ax2.set_ylabel('Specificity')
+
+    plots = p1 + p2
+    ax1.legend(plots, [p.get_label() for p in plots], loc='center right')
+
+    return _output_figure(filename)
