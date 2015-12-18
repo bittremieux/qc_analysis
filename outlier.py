@@ -90,7 +90,8 @@ def outlier_subspace_explanation(data, outlier, k, alpha=0.35):
         random_inliers_idx = random.sample([x for x in range(len(data)) if x not in ref_set_idx], len(ref_set_idx))
 
         # supersample the outlier
-        outliers_sample = np.random.multivariate_normal(outlier_values.reshape(-1), cov, len(ref_set_idx) + len(random_inliers_idx))
+        outliers_sample = np.random.multivariate_normal(outlier_values.reshape(-1), cov,
+                                                        len(ref_set_idx) + len(random_inliers_idx))
 
         # determine the relevant features by classifying the inliers versus the outliers
         x = np.vstack([[data.iloc[i] for i in itertools.chain(ref_set_idx, random_inliers_idx)], outliers_sample])

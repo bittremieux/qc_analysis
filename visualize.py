@@ -176,7 +176,8 @@ def plot_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
 def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=None):
     plt.figure()
 
-    ax = sns.distplot(outlier_scores, bins=num_bins, kde=False, axlabel='Outlier score (%)', hist_kws={'histtype': 'stepfilled'})
+    ax = sns.distplot(outlier_scores, bins=num_bins, kde=False, axlabel='Outlier score (%)',
+                      hist_kws={'histtype': 'stepfilled'})
     plt.ylabel('Number of experiments')
 
     if score_cutoff is not None:
@@ -266,9 +267,12 @@ def plot_aucs(aucs, k_range, filename=None):
 def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
     # generate the histogram values for the three classes
     bins = np.arange(0, 1.01, 1 / num_bins)
-    hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'], bins=bins)
-    hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'], bins=bins)
-    hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'], bins=bins)
+    hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'],
+                                bins=bins)
+    hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'],
+                              bins=bins)
+    hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'],
+                                bins=bins)
     hist = pd.DataFrame({'good': hist_good, 'ok': hist_ok, 'poor': hist_poor}, bins[:-1])
 
     plt.figure()
