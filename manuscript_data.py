@@ -32,7 +32,7 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
     psm_table['\\bfseries Inliers'] = inlier_psms
     color_classes = [0]
     pval_table = pd.DataFrame(index=range(len(frequent_subspaces)),
-                              columns=['Metric(s)', 'Number of outliers', '\emph{p}-value'])
+                              columns=['Metric(s)', 'Support (\%)', '\emph{p}-value'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
         subspace = sorted(subspace)
 
@@ -50,8 +50,9 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
         color_classes.append(2 if p_value <= 0.05 and t_stat > 0 else 1)
 
         pval_table.set_value(i, 'Metric(s)', ', '.join(subspace))
-        pval_table.set_value(i, 'Number of outliers', support)
-        pval_table.set_value(i, '\emph{p}-value', p_value)
+        pval_table.set_value(i, 'Support (\%)', round(support))
+        pval_table.set_value(i, '\emph{p}-value', '{}{:.5f}'.format('\cellcolor{lightgray} '
+                                                                    if p_value <= 0.05 and t_stat > 0 else '', p_value))
 
     exporter.psm_pval(psm_table, pval_table, color_classes)
 
@@ -118,10 +119,10 @@ def run(args, f_psms=None, f_class=None, k_min=2, folder=None):
 
 if __name__ == '__main__':
     # PNNL
-    # instruments = ['iontrap', 'orbi', 'velos']
-    # for instrument in instruments:
-    #     run(qc_analysis.parse_args('-k 1 data/PNNL_{}_QuaMeter.tsv out.qcml'.format(instrument)),
-    #         f_class='data/PNNL_{}_validation.csv'.format(instrument), folder='out/{}'.format(instrument))
+    instruments = [('iontrap', 0.15), ('orbi', 0.25), ('velos', 0.20)]
+    for instrument, outlier_score in instruments:
+        run(qc_analysis.parse_args('-k 1 -o {} data/PNNL_{}_QuaMeter.tsv out.qcml'.format(outlier_score, instrument)),
+            f_class='data/PNNL_{}_validation.csv'.format(instrument), folder='out/{}'.format(instrument))
 
     # TCGA
     run(qc_analysis.parse_args('-k 50 -o 0.25 data/TCGA_QuaMeter.tsv out.qcml'), f_psms='data/TCGA_psms.csv', folder='out/tcga')

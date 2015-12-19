@@ -78,7 +78,7 @@ def analyze_outliers(data, outliers, k, min_sup):
                                             columns=['Outlier subspace QC metric(s)', 'Support (%)'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
         frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
-        frequent_subspaces_table.set_value(i, 'Support (%)', int(support))
+        frequent_subspaces_table.set_value(i, 'Support (%)', round(support))
 
     exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup)
 

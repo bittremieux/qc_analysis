@@ -351,8 +351,8 @@ def plot_score_sensitivity_specificity(true_classes, predicted_scores, filename=
         tn = len(sorted_classes) - (i + 1) - fn
 
         # sensitivity and specificity
-        sensitivity[i] = tn / (tn + fp)
-        specificity[i] = tp / (tp + fn)
+        sensitivity[i] = tp / (tp + fn)
+        specificity[i] = tn / (tn + fp)
 
     plt.figure()
     ax1 = plt.gca()
@@ -361,7 +361,7 @@ def plot_score_sensitivity_specificity(true_classes, predicted_scores, filename=
     # plot the sensitivity and specificity in function of the outlier score
     p1 = ax1.plot(sorted_scores, sensitivity, label='Sensitivity')
     # advance colors for the second axis
-    next(ax2._get_lines.prop_cycler)
+    next(ax2._get_lines.color_cycle)
     p2 = ax2.plot(sorted_scores, specificity, label='Specificity')
 
     ax1.set_xlim([-0.05, 1.05])

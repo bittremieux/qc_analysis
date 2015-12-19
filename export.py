@@ -248,8 +248,7 @@ class Exporter:
 
         if self.export_figures:
             with open(os.path.join(self.fig_folder, 'table_psm_pval.txt'), 'w') as f_out:
-                f_out.write(pvals.to_latex(index=False, escape=False,
-                                           float_format=lambda x: '{}{:.5f}'.format('\cellcolor{lightgray} ' if x <= 0.05 else '', x)))
+                f_out.write(pvals.to_latex(index=False, escape=False))
 
             visualize.plot_psm_boxplots(psms, color_classes, orient='h', filename=os.path.join(self.fig_folder, 'psm_subspace.pdf'))
 
