@@ -103,7 +103,7 @@ def parse_args(args_str=None):
     parser.add_argument('--scaling_mode', '-scale', default='robust', type=str, choices=['robust', 'standard'],
                         help='mode to standardize the metric values (default: %(default)s)')
     parser.add_argument('--k_neighbors', '-k', type=int, required=True,
-                        help='the number of nearest neighbors used for outlier detection')
+                        help='the number of nearest neighbors used for outlier detection and interpretation')
     parser.add_argument('--distance', '-dist', default='manhattan', type=str,
                         help='metric to use for distance computation (default: %(default)s) '
                              'ny metric from scikit-learn or scipy.spatial.distance can be used')
