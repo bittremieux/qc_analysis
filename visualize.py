@@ -265,30 +265,49 @@ def plot_aucs(aucs, k_range, filename=None):
 
 
 def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
-    # generate the histogram values for the three classes
-    bins = np.arange(0, 1.01, 1 / num_bins)
-    hist_good, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'good'],
-                                bins=bins)
-    hist_ok, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'ok'],
-                              bins=bins)
-    hist_poor, _ = np.histogram([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == 'poor'],
-                                bins=bins)
-    hist = pd.DataFrame({'good': hist_good, 'ok': hist_ok, 'poor': hist_poor}, bins[:-1])
+    with sns.color_palette(sns.xkcd_palette(['medium green', 'orange yellow', 'faded red'])):
+        plt.figure()
 
-    plt.figure()
+        # generate the histogram values for the three classes
+        bins = np.arange(0, 1.01, 1 / num_bins)
+        hist = pd.DataFrame({quality: np.histogram([score for i, score in enumerate(outlier_scores)
+                                                    if outlier_quality.iloc[i] == quality], bins=bins)[0]
+                             for quality in ['good', 'ok', 'poor']}, bins[:-1])
 
-    ax = hist.plot(kind='bar', colormap=mpl.colors.ListedColormap(sns.color_palette('deep', 3)), position=0)
+        ax = hist.plot(kind='bar', position=0)
 
-    plt.xlabel('Outlier score (%)')
-    plt.ylabel('Number of experiments')
+        plt.xlabel('Outlier score (%)')
+        plt.ylabel('Number of experiments')
 
-    sns.despine(right=True, top=True)
+        sns.despine(right=True, top=True)
 
-    # change the x-axis to not include each bin value and convert to percentages
-    ax.set_xticks(range(0, 21, 4))
-    ax.set_xticklabels(range(0, 101, 20), rotation=0)
+        # change the x-axis to not include each bin value and convert to percentages
+        ax.set_xticks(range(0, 21, 4))
+        ax.set_xticklabels(range(0, 101, 20), rotation=0)
 
-    return _output_figure(filename)
+        return _output_figure(filename)
+
+
+def plot_outlier_classes_score_kde(outlier_scores, outlier_quality, num_bins, filename=None):
+    with sns.color_palette(sns.xkcd_palette(['medium green', 'orange yellow', 'faded red'])):
+        plt.figure()
+
+        bins = np.arange(0, 1.01, 1 / num_bins)
+        for quality in ['good', 'ok', 'poor']:
+            sns.distplot([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == quality],
+                         bins=bins, hist=False, kde=True, kde_kws={'label': quality, 'shade': True}, norm_hist=True)
+
+        plt.xlabel('Outlier score (%)')
+        plt.ylabel('Density')
+
+        sns.despine(right=True, top=True)
+
+        # convert the outlier score tick labels to percentages
+        ax = plt.gca()
+        ax.set_xlim(0, 1)
+        ax.set_xticklabels(range(0, 101, 20), rotation=0)
+
+        return _output_figure(filename)
 
 
 def plot_roc(true_classes, predicted_scores, filename=None):

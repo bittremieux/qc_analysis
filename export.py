@@ -258,7 +258,8 @@ class Exporter:
 
     def outlier_validation(self, outlier_scores, quality_classes, num_bins, validation_classes):
         if self.export_figures:
-            visualize.plot_outlier_classes_score_hist(outlier_scores, quality_classes, num_bins, os.path.join(self.fig_folder, 'outlier-hist-classes.pdf'))
+            visualize.plot_outlier_classes_score_hist(outlier_scores, quality_classes, num_bins, os.path.join(self.fig_folder, 'outlier-scorequality-hist.pdf'))
+            visualize.plot_outlier_classes_score_kde(outlier_scores, quality_classes, num_bins, os.path.join(self.fig_folder, 'outlier-scorequality-kde.pdf'))
             visualize.plot_roc(validation_classes, outlier_scores, os.path.join(self.fig_folder, 'roc.pdf'))
             visualize.plot_precision_recall(validation_classes, outlier_scores, os.path.join(self.fig_folder, 'precision-recall.pdf'))
             visualize.plot_score_sensitivity_specificity(validation_classes, outlier_scores, os.path.join(self.fig_folder, 'score-sensitivity-specificity.pdf'))
