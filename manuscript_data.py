@@ -8,6 +8,7 @@ from sklearn.metrics import roc_auc_score
 import export
 import outlier
 import qc_analysis
+import visualize
 
 
 ##############################################################################
@@ -59,14 +60,10 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 
 # OUTLIER VALIDATION USING PNNL EXPERT CLASSIFICATION
 
-def _quality_classes_to_binary(filenames, quality_classes):
-    # convert quality classes: 1 -> poor, 0 -> good/ok
-    # requires that NO unvalidated samples are present
-    return np.array([1 if quality_classes[f] == 'poor' else 0 for f in filenames])
-
 
 def find_optimal_outliers_k(data, f_class, k_min, dist):
-    true_classes = _quality_classes_to_binary(data.index.get_level_values(0), pd.Series.from_csv(f_class))
+    quality_classes = pd.DataFrame({'quality': pd.Series.from_csv(f_class)}, data.index.get_level_values(0))
+    true_classes = visualize._to_binary_class_labels(quality_classes)
     k_range = np.arange(k_min, math.ceil(len(data) / 2), dtype=int)
 
     aucs = []
@@ -82,10 +79,10 @@ def find_optimal_outliers_k(data, f_class, k_min, dist):
 
 
 def validate_outlier_score(data, f_class, scores, num_bins=20):
-    quality_classes = pd.Series.from_csv(f_class)
-    true_classes = _quality_classes_to_binary(data.index.get_level_values(0), quality_classes)
+    # merge outlier scores and manual quality assignments
+    classes_scores = pd.DataFrame({'quality': pd.Series.from_csv(f_class), 'score': scores})
 
-    exporter.outlier_validation(scores, quality_classes, num_bins, true_classes)
+    exporter.outlier_validation(classes_scores, num_bins)
 
 
 ##############################################################################

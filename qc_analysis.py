@@ -50,7 +50,7 @@ def detect_outliers(data, k, dist, outlier_threshold=None, num_bins=20):
     # separate significant outliers
     data_excluding_outliers, outliers = outlier.split_outliers(data, outlier_scores, outlier_threshold)
 
-    return outliers, outlier_scores
+    return outliers, pd.Series(outlier_scores, data.index.get_level_values(0))
 
 
 def analyze_outliers(data, outliers, k, min_sup):

@@ -176,7 +176,7 @@ def plot_tsne_outliers(df, outlier_scores, score_threshold, filename=None):
 def plot_outlier_score_hist(outlier_scores, num_bins, score_cutoff, filename=None):
     plt.figure()
 
-    ax = sns.distplot(outlier_scores, bins=num_bins, kde=False, axlabel='Outlier score (%)',
+    ax = sns.distplot(outlier_scores, bins=np.arange(0, 1.01, 1 / num_bins), kde=False, axlabel='Outlier score (%)',
                       hist_kws={'histtype': 'stepfilled'})
     plt.ylabel('Number of experiments')
 
@@ -264,15 +264,14 @@ def plot_aucs(aucs, k_range, filename=None):
     return _output_figure(filename)
 
 
-def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, filename=None):
+def plot_outlier_classes_score_hist(classes_scores, num_bins, filename=None):
     with sns.color_palette(sns.xkcd_palette(['medium green', 'orange yellow', 'faded red'])):
         plt.figure()
 
         # generate the histogram values for the three classes
         bins = np.arange(0, 1.01, 1 / num_bins)
-        hist = pd.DataFrame({quality: np.histogram([score for i, score in enumerate(outlier_scores)
-                                                    if outlier_quality.iloc[i] == quality], bins=bins)[0]
-                             for quality in ['good', 'ok', 'poor']}, bins[:-1])
+        hist = pd.DataFrame({quality: np.histogram(classes_scores.loc[classes_scores['quality'] == quality]['score'],
+                                                   bins=bins)[0] for quality in ['good', 'ok', 'poor']}, bins[:-1])
 
         ax = hist.plot(kind='bar', position=0)
 
@@ -288,14 +287,14 @@ def plot_outlier_classes_score_hist(outlier_scores, outlier_quality, num_bins, f
         return _output_figure(filename)
 
 
-def plot_outlier_classes_score_kde(outlier_scores, outlier_quality, num_bins, filename=None):
+def plot_outlier_classes_score_kde(classes_scores, num_bins, filename=None):
     with sns.color_palette(sns.xkcd_palette(['medium green', 'orange yellow', 'faded red'])):
         plt.figure()
 
         bins = np.arange(0, 1.01, 1 / num_bins)
         for quality in ['good', 'ok', 'poor']:
-            sns.distplot([score for i, score in enumerate(outlier_scores) if outlier_quality.iloc[i] == quality],
-                         bins=bins, hist=False, kde=True, kde_kws={'label': quality, 'shade': True}, norm_hist=True)
+            sns.distplot(classes_scores.loc[classes_scores['quality'] == quality]['score'], bins=bins, hist=False,
+                         kde=True, kde_kws={'label': quality, 'shade': True}, norm_hist=True)
 
         plt.xlabel('Outlier score (%)')
         plt.ylabel('Density')
@@ -310,14 +309,29 @@ def plot_outlier_classes_score_kde(outlier_scores, outlier_quality, num_bins, fi
         return _output_figure(filename)
 
 
-def plot_roc(true_classes, predicted_scores, filename=None):
-    # compute false positive rate and true positive rate
-    fpr, tpr, _ = roc_curve(true_classes, predicted_scores)
+def _to_binary_class_labels(quality_classes, pos_label=('good', 'ok')):
+    # convert quality classes: 1 -> poor, 0 -> good/ok
+    # requires that NO unvalidated samples are present
+    return np.array([0 if quality in pos_label else 1 for quality in quality_classes['quality']])
 
+
+def plot_roc(classes_scores, filename=None):
     plt.figure()
 
-    # plot the ROC curve
-    plt.plot(fpr, tpr, label='ROC curve (AUC = {0:.2f})'.format(roc_auc_score(true_classes, predicted_scores)))
+    # convert ordinal class labels to binary labels
+    binary_classes = _to_binary_class_labels(classes_scores)
+
+    for zorder, ignore_quality in reversed(list(enumerate(['good', 'ok', None]))):
+        # ignore samples of the quality that's not considered
+        sample_weight = None if ignore_quality is None else _to_binary_class_labels(classes_scores, (ignore_quality, ))
+
+        # compute roc
+        fpr, tpr, _ = roc_curve(binary_classes, classes_scores['score'], sample_weight=sample_weight)
+        auc = roc_auc_score(binary_classes, classes_scores['score'], sample_weight=sample_weight)
+        # plot the ROC curve
+        alpha = 1 if ignore_quality is None else 1 / 3
+        label = 'all' if ignore_quality is None else "only '{}'".format('good' if ignore_quality == 'ok' else 'ok')
+        plt.plot(fpr, tpr, zorder=zorder, alpha=alpha, label='ROC curve {} (AUC = {:.2f})'.format(label, auc))
 
     # plot the random ROC curve at 0.5
     plt.plot([0, 1], [0, 1], 'k--')
@@ -333,15 +347,16 @@ def plot_roc(true_classes, predicted_scores, filename=None):
     return _output_figure(filename)
 
 
-def plot_precision_recall(true_classes, predicted_scores, filename=None):
+def plot_precision_recall(classes_scores, filename=None):
     # compute false positive rate and true positive rate
-    precision, recall, _ = precision_recall_curve(true_classes, predicted_scores)
+    binary_classes = _to_binary_class_labels(classes_scores)
+    precision, recall, _ = precision_recall_curve(binary_classes, classes_scores['score'])
 
     plt.figure()
 
     # plot the ROC curve
-    plt.plot(recall, precision, label='Precision-recall curve (average precision = {0:.2f})'
-             .format(average_precision_score(true_classes, predicted_scores)))
+    plt.plot(recall, precision, label='Precision-recall curve (average precision = {:.2f})'
+             .format(average_precision_score(binary_classes, classes_scores['score'])))
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
@@ -354,20 +369,19 @@ def plot_precision_recall(true_classes, predicted_scores, filename=None):
     return _output_figure(filename)
 
 
-def plot_score_sensitivity_specificity(true_classes, predicted_scores, filename=None):
+def plot_score_sensitivity_specificity(classes_scores, filename=None):
     # compute sensitivity and specificity
-    sort_order = predicted_scores.argsort()[::-1]   # sort by descending outlier score
-    sorted_scores = predicted_scores[sort_order]
-    sorted_classes = true_classes[sort_order]
+    sorted_scores = classes_scores.sort_values('score', ascending=False)
+    sorted_binary_classes = _to_binary_class_labels(sorted_scores)
 
-    sensitivity, specificity = np.zeros(len(sorted_classes)), np.zeros(len(sorted_classes))
-    for i in range(len(sorted_classes)):
+    sensitivity, specificity = np.zeros(len(sorted_scores)), np.zeros(len(sorted_scores))
+    for i in range(len(sorted_binary_classes)):
         # true positives or false positives based on predictions above score cut-off
-        tp = np.count_nonzero(sorted_classes[:i + 1])
+        tp = np.count_nonzero(sorted_binary_classes[:i + 1])
         fp = (i + 1) - tp
         # true negatives or false negatives based on predictions below score cut-off
-        fn = np.count_nonzero(sorted_classes[i + 1:])
-        tn = len(sorted_classes) - (i + 1) - fn
+        fn = np.count_nonzero(sorted_binary_classes[i + 1:])
+        tn = len(sorted_binary_classes) - (i + 1) - fn
 
         # sensitivity and specificity
         sensitivity[i] = tp / (tp + fn)
@@ -378,10 +392,10 @@ def plot_score_sensitivity_specificity(true_classes, predicted_scores, filename=
     ax2 = plt.twinx()
 
     # plot the sensitivity and specificity in function of the outlier score
-    p1 = ax1.plot(sorted_scores, sensitivity, label='Sensitivity')
+    p1 = ax1.plot(sorted_scores['score'], sensitivity, label='Sensitivity')
     # advance colors for the second axis
     next(ax2._get_lines.color_cycle)
-    p2 = ax2.plot(sorted_scores, specificity, label='Specificity')
+    p2 = ax2.plot(sorted_scores['score'], specificity, label='Specificity')
 
     ax1.set_xlim([-0.05, 1.05])
     ax1.set_ylim([-0.05, 1.05])
