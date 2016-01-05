@@ -5,7 +5,6 @@ import sqlite3
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn_pandas import DataFrameMapper
 
 import qcml
 import visualize
@@ -144,7 +143,7 @@ class Exporter:
             visualize.plot_tsne(data, filename=os.path.join(self.fig_folder, 'tsne.pdf'))
 
             pca = PCA(2)
-            DataFrameMapper([(data.columns.values, pca)]).fit_transform(data)
+            pca.fit_transform(data.values)
 
             with open(os.path.join(self.fig_folder, 'table_pca.txt'), 'w') as f_out:
                 pca_table = pd.DataFrame(index=range(len(data.columns.values)), columns=['Metric', 0, 1])

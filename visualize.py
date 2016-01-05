@@ -10,7 +10,6 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
-from sklearn_pandas import DataFrameMapper
 
 
 sns.set_context('paper')
@@ -113,8 +112,7 @@ def _scatter_plot(scatter_data, df, filename=None):
 
 def plot_pca(df, filename=None):
     # transform data to lower dimension
-    pca = PCA(2)
-    pca_data = DataFrameMapper([(df.columns.values, pca)]).fit_transform(df)
+    pca_data = PCA(2).fit_transform(df.values)
 
     # plot
     return _scatter_plot(pca_data, df, filename)
@@ -158,8 +156,7 @@ def scatter_outliers(scatter_data, df, outlier_scores, score_threshold, filename
 
 def plot_pca_outliers(df, outlier_scores, score_threshold, filename=None):
     # transform data to lower dimension
-    pca = PCA(2)
-    pca_data = DataFrameMapper([(df.columns.values, pca)]).fit_transform(df)
+    pca_data = PCA(2).fit_transform(df.values)
 
     # plot
     return scatter_outliers(pca_data, df, outlier_scores, score_threshold, filename)

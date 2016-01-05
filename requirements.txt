@@ -14,5 +14,4 @@ scikit-learn==0.18.dev0
 scipy==0.16.1
 seaborn==0.6.0
 six==1.10.0
-sklearn-pandas==1.1.0
 wheel==0.24.0
