@@ -1,4 +1,7 @@
 import math
+import os
+import urllib.request
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -115,6 +118,20 @@ def run(args, f_psms=None, f_class=None, k_min=2, folder=None):
 
 
 if __name__ == '__main__':
+    # check if the data folder exists and if all data files are present
+    data_dir = 'data/'
+    data_files = ['PNNL_iontrap_QuaMeter.tsv', 'PNNL_iontrap_validation.csv',
+                  'PNNL_orbi_QuaMeter.tsv', 'PNNL_orbi_validation.csv',
+                  'PNNL_velos_QuaMeter.tsv', 'PNNL_velos_validation.csv',
+                  'TCGA_QuaMeter.tsv', 'TCGA_psms.csv']
+    if not (os.path.exists(data_dir) and all([os.path.isfile(os.path.join(data_dir, f)) for f in data_files])):
+        # otherwise download the data
+        zip_filename = 'data.zip'
+        urllib.request.urlretrieve('https://bitbucket.org/proteinspector/qc_analysis/downloads/data.zip', zip_filename)
+        with zipfile.ZipFile(zip_filename) as zf:
+            zf.extractall(data_dir)
+        os.remove(zip_filename)
+
     # PNNL
     instruments = [('iontrap', 0.15), ('orbi', 0.25), ('velos', 0.20)]
     for instrument, outlier_score in instruments:

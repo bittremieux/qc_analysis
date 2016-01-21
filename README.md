@@ -92,10 +92,10 @@ Most external requirements can be installed directly via pip, with the following
 * [PyFIM](http://www.borgelt.net/pyfim.html) (fim): see the detailed installation instructions on the website to install from source.
 * [scikit-learn](http://scikit-learn.org/): scikit-learn at least version 0.18 is required, which is currently still in development. The development version can be installed from [git](https://github.com/scikit-learn/scikit-learn).
 
-Manuscript figure generation
-----------------------------
+Manuscript reproducibility
+--------------------------
 
-All figures and tables presented in the manuscript can easily be generated through `manuscript_data.py`. It expects that all required input data files (available [here](https://bitbucket.org/proteinspector/qc_analysis/downloads/data.zip)) are present in a `./data/` subdirectory.
+All figures and tables presented in the manuscript can easily be reproduced. Execute `manuscript_data.py` to download the required data consisting of the QC metrics and validation information (found on the [Downloads](https://bitbucket.org/proteinspector/qc_analysis/downloads) page) and to perform the analyses.
 
 Contact
 -------
