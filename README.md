@@ -11,7 +11,7 @@ This tool analyzes the quality of mass spectrometry proteomics experiments based
 
 If these techniques are useful for your work, please cite the following publication:
 
-* Bittremieux, W., Meysman, P., Martens, L., Valkenborg, D., and Laukens, K. **Unsupervised quality assessment of mass spectrometry proteomics experiments by multivariate quality control metrics.** *Journal of Proteome Research* (2016). doi:10.1021/acs.jproteome.6b00028
+* Bittremieux, W., Meysman, P., Martens, L., Valkenborg, D., and Laukens, K. **Unsupervised quality assessment of mass spectrometry proteomics experiments by multivariate quality control metrics.** *Journal of Proteome Research* (2016). doi:[10.1021/acs.jproteome.6b00028](http://pubs.acs.org/doi/abs/10.1021/acs.jproteome.6b00028)
 
 
 The software is available as open-source under the Apache 2.0 license.
