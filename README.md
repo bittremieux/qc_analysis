@@ -1,11 +1,18 @@
-Analysis of mass spectrometry quality control metrics
-=====================================================
+Analysis of mass spectrometry proteomics quality control metrics
+================================================================
+
+![QC analysis](qc_analysis.png)
 
 For more information:
 
 * [Official code website](https://bitbucket.org/proteinspector/qc_analysis/)
 
-This tool analyzes the quality of mass spectrometry experiments based on their quality control metrics.
+This tool analyzes the quality of mass spectrometry proteomics experiments based on their quality control metrics.
+
+If these techniques are useful for your work, please cite the following publication:
+
+* Bittremieux, W., Meysman, P., Martens, L., Valkenborg, D., and Laukens, K. **Unsupervised quality assessment of mass spectrometry proteomics experiments by multivariate quality control metrics.** *Journal of Proteome Research* (2016). doi:10.1021/acs.jproteome.6b00028
+
 
 The software is available as open-source under the Apache 2.0 license.
 
