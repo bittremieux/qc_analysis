@@ -30,7 +30,8 @@ Application
 
 	positional arguments:
 	  file_in               the tab-separated input file containing the QC metrics
-	  file_out              the name of the qcML output file
+      file_out              the name of the output file (.html extension for HTML
+                            export (default), .qcml extension for qcML export
 
 	optional arguments:
 	  -h, --help            show this help message and exit
@@ -62,7 +63,7 @@ Application
 							mining (default: 5) positive numbers are interpreted
 							as percentages, negative numbers as absolute supports
 
-The only **required** parameters are the QC metrics input file, the qcML output file, and the number of neighbors used for detecting and interpreting outlying experiments (`--k_neighbors` / `-k`).
+The only **required** parameters are the QC metrics input file, the output file, and the number of neighbors used for detecting and interpreting outlying experiments (`--k_neighbors` / `-k`).
 
 The other parameters are optional and can be used to optimize the analyses, however, the default values should function adequately in most situations.
 
@@ -87,17 +88,16 @@ Files adhering to this format can be generated directly using [QuaMeter](http://
 Output file format
 ------------------
 
-The result of the analysis is exported to a qcML file, which can be viewed in any browser.
+The result of the analysis is exported to an HTML report or an equivalent qcML file, which can be viewed in any browser.
 
 Dependencies
 ------------
 
 Python 3.3 or higher is required to run the software. The required external modules are available in the file `requirements.txt`.
 
-Most external requirements can be installed directly via pip, with the following exceptions:
+Most external requirements can be installed directly via pip, with the following exception:
 
-* [PyFIM](http://www.borgelt.net/pyfim.html) (fim): see the detailed installation instructions on the website to install from source.
-* [scikit-learn](http://scikit-learn.org/): scikit-learn at least version 0.18 is required, which is currently still in development. The development version can be installed from [git](https://github.com/scikit-learn/scikit-learn).
+* [PyFIM](http://www.borgelt.net/pyfim.html) (fim): see the detailed installation instructions on the website to install.
 
 Manuscript reproducibility
 --------------------------

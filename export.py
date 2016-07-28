@@ -1,7 +1,10 @@
+import base64
 import datetime
+import itertools
 import os
 import sqlite3
 
+import jinja2
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -25,8 +28,8 @@ def extract_idp_psms_to_file(f_in, f_out):
 
 class Exporter:
 
-    def __init__(self, export_qcml=True, export_figures=False, fig_folder=None):
-        self.export_qcml = export_qcml
+    def __init__(self, export_report=True, export_figures=False, fig_folder=None):
+        self.export_report = export_report
         self.export_figures = export_figures
         self.fig_folder = fig_folder
 
@@ -38,7 +41,9 @@ class Exporter:
         elif export_figures:
             self.fig_folder = os.getcwd()
 
-        if self.export_qcml:
+        if self.export_report:
+            # nothing needed to be done for HTML export, we will differ between HTML and qcML later on
+
             # create qcML
             self.qcml_out = qcml.qcMLType()
             self.qcml_out.set_version('0.0.8')
@@ -66,7 +71,7 @@ class Exporter:
             pass
 
     def low_variance(self, variances, min_var):
-        if self.export_qcml:
+        if self.export_report:
             param_var = qcml.QualityParameterType(name='Variance threshold', ID='VarianceThreshold', value='{:.3e}'.format(min_var),
                                                   cvRef=self.cv_outlier.get_ID(), accession='none')
             self.set_quality.add_qualityParameter(param_var)
@@ -80,7 +85,7 @@ class Exporter:
             pass
 
     def correlation(self, corr, min_corr):
-        if self.export_qcml:
+        if self.export_report:
             param_corr = qcml.QualityParameterType(name='Correlation threshold', ID='CorrelationThreshold', value=min_corr,
                                                    cvRef=self.cv_outlier.get_ID(), accession='none')
             self.set_quality.add_qualityParameter(param_corr)
@@ -126,7 +131,7 @@ class Exporter:
                                            formatters={'{Variance}': lambda x: '{}{:.2e}'.format('\cellcolor{gray} ' if x < min_var else '', x)}))
 
     def global_visualization(self, data):
-        if self.export_qcml:
+        if self.export_report:
             self.set_quality.add_attachment(qcml.AttachmentType(name='Experiment execution time', ID='time',
                                                                 binary=visualize.plot_timestamps(data, filename='__qcml_export__'),
                                                                 cvRef=self.cv_outlier.get_ID(), accession='none'))
@@ -159,7 +164,7 @@ class Exporter:
                     '\cellcolor{gray} ' if abs(x) >= 0.3 else '\cellcolor{lightgray} ' if abs(x) >= 0.2 else '', x)))
 
     def outlier_scores(self, data, outlier_scores, outlier_threshold, num_bins):
-        if self.export_qcml:
+        if self.export_report:
             param_score = qcml.QualityParameterType(name='Outlier score threshold', ID='OutlierScoreThreshold', value=outlier_threshold,
                                                     cvRef=self.cv_outlier.get_ID(), accession='none')
             self.set_quality.add_qualityParameter(param_score)
@@ -180,7 +185,7 @@ class Exporter:
     def outlier(self, outlier, data):
         feature_importance = pd.Series(outlier['FeatureImportance'], index=outlier.drop(['OutlierScore', 'FeatureImportance', 'Subspace']).index)
 
-        if self.export_qcml:
+        if self.export_report:
             run_quality = qcml.RunQualityAssessmentType(ID=outlier.name[0])
             self.qcml_out.add_runQuality(run_quality)
 
@@ -212,7 +217,7 @@ class Exporter:
             visualize.plot_subspace_boxplots(data[outlier['Subspace']], outlier[outlier['Subspace']], filename=os.path.join(self.fig_folder, 'outlier/{}_subspace.pdf'.format(outlier.name[0])))
 
     def frequent_outlier_subspaces(self, subspaces, min_sup):
-        if self.export_qcml:
+        if self.export_report:
             if min_sup > 0:
                 min_sup_str = '{}%'.format(min_sup)
             else:
@@ -233,7 +238,7 @@ class Exporter:
                 f_out.write(subspaces.to_latex(index=False))
 
     def psm(self, inlier_psms, outlier_psms):
-        if self.export_qcml:
+        if self.export_report:
             pass
 
         if self.export_figures:
@@ -242,7 +247,7 @@ class Exporter:
                                         filename=os.path.join(self.fig_folder, 'psm_all.pdf'))
 
     def psm_pval(self, psms, pvals, color_classes):
-        if self.export_qcml:
+        if self.export_report:
             pass
 
         if self.export_figures:
@@ -264,8 +269,46 @@ class Exporter:
             visualize.plot_score_sensitivity_specificity(classes_scores, os.path.join(self.fig_folder, 'score-sensitivity-specificity.pdf'))
 
     def export(self, file_out):
-        if self.export_qcml:
-            self.qcml_out.export(file_out, 0, name_='qcML', namespacedef_='xmlns="http://www.prime-xs.eu/ms/qcml"')
+        if self.export_report:
+            _, ext = os.path.splitext(file_out.name)
+            if ext == 'html':
+                self.export_to_html(file_out)
+            elif ext == 'qcml':
+                self.qcml_out.export(file_out, 0, name_='qcML', namespacedef_='xmlns="http://www.prime-xs.eu/ms/qcml"')
+            else:       # default: export to HTML
+                self.export_to_html(file_out)
 
         if self.export_figures:
             pass
+
+    def export_to_html(self, file_out):
+        context = {}
+        # summary information
+        for parameter in itertools.chain(self.set_quality.get_qualityParameter(), self.set_quality.get_attachment()):
+            identifier = ''.join(ch for ch in parameter.ID if ch.isalnum()).lower()
+            param_dict = {'name': parameter.name, 'value': parameter.value}
+
+            if hasattr(parameter, 'binary') and parameter.binary is not None:
+                param_dict['binary'] = base64.b64encode(parameter.binary).decode('ascii')
+            elif hasattr(parameter, 'table') and parameter.table is not None:
+                param_dict['header'] = parameter.table.tableColumnTypes
+                param_dict['rows'] = parameter.table.tableRowValues
+
+            context[identifier] = param_dict
+
+        # individual outliers
+        outliers = []
+        for outlier in self.qcml_out.get_runQuality():
+            outlier_dict = {'name': outlier.ID, 'score': outlier.get_qualityParameter()[0].value}
+
+            for attachment in outlier.get_attachment():
+                if attachment.name == 'Feature importance':
+                    outlier_dict['features'] = base64.b64encode(attachment.binary).decode('ascii')
+                elif attachment.name == 'Explanatory subspace':
+                    outlier_dict['subspace'] = base64.b64encode(attachment.binary).decode('ascii')
+
+            outliers.append(outlier_dict)
+
+        context['outliers'] = outliers
+
+        file_out.write(jinja2.Environment(loader=jinja2.FileSystemLoader('.')).get_template('template.html').render(context))

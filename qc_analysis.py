@@ -95,7 +95,8 @@ def parse_args(args_str=None):
     parser.add_argument('file_in', type=argparse.FileType('r'),
                         help='the tab-separated input file containing the QC metrics')
     parser.add_argument('file_out', type=argparse.FileType('w'),
-                        help='the name of the qcML output file')
+                        help='the name of the output file (.html extension for HTML export (default), '
+                             '.qcml extension for qcML export')
     parser.add_argument('--min_var', '-var', default=0.0001, type=float,
                         help='metrics with a lower variance will be removed (default: %(default)s)')
     parser.add_argument('--min_corr', '-corr', default=0.9, type=float,
@@ -132,7 +133,10 @@ def run(args):
     outliers, outliers_score = detect_outliers(data, args.k_neighbors, args.distance, args.min_outlier, args.num_bins)
     analyze_outliers(data, outliers, args.k_neighbors, args.min_sup)
 
-    exporter.export(args.file_out)
+    try:
+        exporter.export(args.file_out)
+    finally:
+        args.file_out.close()
 
 
 if __name__ == '__main__':
