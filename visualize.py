@@ -389,10 +389,9 @@ def plot_score_sensitivity_specificity(classes_scores, filename=None):
     ax2 = plt.twinx()
 
     # plot the sensitivity and specificity in function of the outlier score
-    p1 = ax1.plot(sorted_scores['score'], sensitivity, label='Sensitivity')
+    p1 = ax1.plot(sorted_scores['score'], sensitivity, label='Sensitivity', color=sns.color_palette()[0])
     # advance colors for the second axis
-    next(ax2._get_lines.color_cycle)
-    p2 = ax2.plot(sorted_scores['score'], specificity, label='Specificity')
+    p2 = ax2.plot(sorted_scores['score'], specificity, label='Specificity', color=sns.color_palette()[1])
 
     ax1.set_xlim([-0.05, 1.05])
     ax1.set_ylim([-0.05, 1.05])
