@@ -1,5 +1,4 @@
 import argparse
-import multiprocessing
 import shlex
 
 import fim
@@ -57,20 +56,14 @@ def analyze_outliers(data, outliers, k, min_sup):
     # retrieve explanatory subspaces for each outlier
     outliers['FeatureImportance'] = object
     outliers['Subspace'] = object
-    with multiprocessing.Pool() as pool:
-        # compute the subspace for each outlier
-        subspaces = {name: pool.apply_async(outlier.get_outlier_subspace, (data, this_outlier, k))
-                     for name, this_outlier in outliers.iterrows()}
-
-        # set the outlier subspaces
-        for name, result in subspaces.items():
-            feature_importance, subspace = result.get()
-            outliers.set_value(name, 'FeatureImportance', feature_importance.values)
-            outliers.set_value(name, 'Subspace', subspace)
-
-    # add the outliers' subspaces to the export
+    # compute the subspace for each outlier
     for name, this_outlier in outliers.iterrows():
-        exporter.outlier(this_outlier, data)
+        feature_importance, subspace = outlier.get_outlier_subspace(data, this_outlier, k)
+        outliers.set_value(name, 'FeatureImportance', feature_importance.values)
+        outliers.set_value(name, 'Subspace', subspace)
+
+        # add the outlier's subspace to the export
+        exporter.outlier(outliers.loc[name], data)      # iterrows creates a copy, so retrieve from the dataframe
 
     # detect frequently occurring explanatory subspaces
     frequent_subspaces = sorted(fim.fim(outliers.Subspace, supp=min_sup, report='S'), key=lambda x: x[1], reverse=True)
