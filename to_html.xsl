@@ -48,19 +48,19 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                            <xsl:value-of select="ns:attachment[@ID='time']/ns:binary"/></xsl:attribute>
                                         </img>
                                         <b><xsl:value-of select="ns:attachment[@ID='time']/@name"/></b>
                                     </div>
                                     <div class="col-md-4">
-                                       <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                       <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                            <xsl:value-of select="ns:attachment[@ID='PCA']/ns:binary"/></xsl:attribute>
                                        </img>
                                        <b><xsl:value-of select="ns:attachment[@ID='PCA']/@name"/></b>
                                     </div>
                                     <div class="col-md-4">
-                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                             <xsl:value-of select="ns:attachment[@ID='t-SNE']/ns:binary"/></xsl:attribute>
                                         </img>
                                         <b><xsl:value-of select="ns:attachment[@ID='t-SNE']/@name"/></b>
@@ -117,7 +117,7 @@
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <figure>
-                                                    <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                                    <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                                         <xsl:value-of select="ns:attachment[@ID='OutlierScoreHistogram']/ns:binary"/></xsl:attribute>
                                                     </img>
                                                     <figcaption><b><xsl:value-of select="ns:qualityParameter[@ID='OutlierScoreThreshold']/@name"/> = <xsl:value-of select="format-number(ns:qualityParameter[@ID='OutlierScoreThreshold']/@value, '00.00%')"/><br/>
@@ -163,13 +163,13 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                             <xsl:value-of select="ns:attachment[@name='Feature importance']/ns:binary"/></xsl:attribute>
                                         </img>
                                         <b><xsl:value-of select="ns:attachment[@name='Feature importance']/@name"/></b>
                                     </div>
                                     <div class="col-md-6">
-                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/svg+xml;base64,
+                                        <img class="img-responsive center-block"><xsl:attribute name="src">data:image/png;base64,
                                             <xsl:value-of select="ns:attachment[@name='Explanatory subspace']/ns:binary"/></xsl:attribute>
                                         </img>
                                         <b><xsl:value-of select="ns:attachment[@name='Explanatory subspace']/@name"/></b>                                    

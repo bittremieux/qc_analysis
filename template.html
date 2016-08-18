@@ -46,15 +46,15 @@
                         </div>
                         <div class="row">
                             <div class="col-md-4">
-                                <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ time.binary }}">
+                                <img class="img-responsive center-block" src="data:image/png;base64,{{ time.binary }}">
                                 <b>{{ time.name }}</b>
                             </div>
                             <div class="col-md-4">
-                               <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ pca.binary }}">
+                               <img class="img-responsive center-block" src="data:image/png;base64,{{ pca.binary }}">
                                <b>{{ pca.name }}</b>
                             </div>
                             <div class="col-md-4">
-                                <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ tsne.binary }}">
+                                <img class="img-responsive center-block" src="data:image/png;base64,{{ tsne.binary }}">
                                 <b>{{ tsne.name }}</b>
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                                 <div class="row">
                                     <div class="col-md-8">
                                         <figure>
-                                            <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ outlierscorehistogram.binary }}">
+                                            <img class="img-responsive center-block" src="data:image/png;base64,{{ outlierscorehistogram.binary }}">
                                             <figcaption><b>{{ outlierscorethreshold.name }} = {{ '{:.2%}'.format(outlierscorethreshold.value) }}<br/>
                                                 {{ nroutliers.name }} = {{ nroutliers.value }}</b></figcaption>
                                         </figure>
@@ -149,11 +149,11 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6">
-                                <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ outlier.features }}">
+                                <img class="img-responsive center-block" src="data:image/png;base64,{{ outlier.features }}">
                                 <b>Feature importance</b>
                             </div>
                             <div class="col-md-6">
-                                <img class="img-responsive center-block" src="data:image/svg+xml;base64,{{ outlier.subspace }}">
+                                <img class="img-responsive center-block" src="data:image/png;base64,{{ outlier.subspace }}">
                                 <b>Explanatory subspace</b>
                             </div>
                         </div>

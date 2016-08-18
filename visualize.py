@@ -23,7 +23,7 @@ def _output_figure(filename):
         plt.show()
     elif filename == '__qcml_export__':
         binary = io.BytesIO()
-        plt.savefig(binary, format='svg')
+        plt.savefig(binary, format='png')
         binary.seek(0)  # rewind the data
         out = binary.read()
     else:
