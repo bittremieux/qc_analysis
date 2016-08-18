@@ -219,9 +219,6 @@ def plot_subspace_boxplots(data, highlights=None, filename=None):
 
 
 def plot_psm_boxplots(data, color_classes=None, filename=None, **kwargs):
-    mpl.rc('text', usetex=True)
-    mpl.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
-
     with sns.axes_style('whitegrid'):
         fig = plt.figure()
         fig.set_tight_layout(True)

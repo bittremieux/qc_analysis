@@ -33,7 +33,7 @@ def compare_outlier_psms(f_psms, outliers):
 def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psms):
     # test whether a subspace can be related to a lower number of PSM's
     psm_table = pd.DataFrame(index=psms.index)
-    psm_table['\\bfseries Inliers'] = inlier_psms
+    psm_table['Inliers'] = inlier_psms
     color_classes = [0]
     pval_table = pd.DataFrame(index=range(len(frequent_subspaces)),
                               columns=['Metric(s)', 'Support (\%)', '\emph{p}-value'])
@@ -50,7 +50,7 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
         # quantify difference between inliers and outliers
         t_stat, p_value = stats.ttest_ind(inlier_psms.values, outlier_psms.values, equal_var=False)
 
-        psm_table['{}{}'.format('\\itshape ' if p_value <= 0.05 and t_stat > 0 else '', ', '.join(subspace))] = outlier_psms
+        psm_table['{}'.format(', '.join(subspace))] = outlier_psms
         color_classes.append(2 if p_value <= 0.05 and t_stat > 0 else 1)
 
         pval_table.set_value(i, 'Metric(s)', ', '.join(subspace))
