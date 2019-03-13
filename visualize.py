@@ -252,7 +252,7 @@ def plot_aucs(aucs, k_range, filename=None):
     for k in max_k:
         plt.scatter(k, max_auc, s=50, c=sns.color_palette()[0], marker='D')
 
-    plt.xlim(xmin=0)
+    plt.xlim(left=0)
     plt.ylim([0.5, 1.0])
 
     plt.xlabel('Local neighborhood size')
