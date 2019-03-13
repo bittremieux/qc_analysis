@@ -63,7 +63,7 @@ def _classes_to_colors(df):
     color_idx = 0
     for c, _ in df.index.values:
         if class_colors.get(c) is None:
-            class_colors[c] = cmap[color_idx]
+            class_colors[c] = mpl.colors.rgb2hex(cmap[color_idx])
             color_idx += 1
 
     colors = []
@@ -250,7 +250,7 @@ def plot_aucs(aucs, k_range, filename=None):
     plt.plot(k_range, aucs)
     # highlight max auc
     for k in max_k:
-        plt.scatter(k, max_auc, s=50, c=sns.color_palette()[0], marker='D')
+        plt.scatter(k, max_auc, s=50, c=mpl.colors.rgb2hex(sns.color_palette()[0]), marker='D')
 
     plt.xlim(left=0)
     plt.ylim([0.5, 1.0])
