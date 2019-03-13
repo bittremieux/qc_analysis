@@ -65,8 +65,8 @@ def analyze_outliers(data, outliers, k, min_sup):
         # set the outlier subspaces
         for name, result in subspaces.items():
             feature_importance, subspace = result.get()
-            outliers.set_value(name, 'FeatureImportance', feature_importance.values)
-            outliers.set_value(name, 'Subspace', subspace)
+            outliers.at[name, 'FeatureImportance'] = feature_importance.values
+            outliers.at[name, 'Subspace'] = subspace
 
     # add the outliers' subspaces to the export
     for name, this_outlier in outliers.iterrows():
@@ -77,8 +77,8 @@ def analyze_outliers(data, outliers, k, min_sup):
     frequent_subspaces_table = pd.DataFrame(index=range(len(frequent_subspaces)),
                                             columns=['Outlier subspace QC metric(s)', 'Support (%)'])
     for i, (subspace, support) in enumerate(frequent_subspaces):
-        frequent_subspaces_table.set_value(i, 'Outlier subspace QC metric(s)', ', '.join(subspace))
-        frequent_subspaces_table.set_value(i, 'Support (%)', round(support))
+        frequent_subspaces_table.at[i, 'Outlier subspace QC metric(s)'] = ', '.join(subspace)
+        frequent_subspaces_table.at[i, 'Support (%)'] = round(support)
 
     exporter.frequent_outlier_subspaces(frequent_subspaces_table, min_sup)
 

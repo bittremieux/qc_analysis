@@ -53,10 +53,10 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
         psm_table['{}'.format(', '.join(subspace))] = outlier_psms
         color_classes.append(2 if p_value <= 0.05 and t_stat > 0 else 1)
 
-        pval_table.set_value(i, 'Metric(s)', ', '.join(subspace))
-        pval_table.set_value(i, 'Support (\%)', round(support))
-        pval_table.set_value(i, '\emph{p}-value', '{}{:.5f}'.format('\cellcolor{lightgray} '
-                                                                    if p_value <= 0.05 and t_stat > 0 else '', p_value))
+        pval_table.at[i, 'Metric(s)'] = ', '.join(subspace))
+        pval_table.at[i, 'Support (\%)'] = round(support))
+        pval_table.at[i, '\emph{p}-value'] = '{}{:.5f}'.format('\cellcolor{lightgray} '
+                                                               if p_value <= 0.05 and t_stat > 0 else '', p_value))
 
     exporter.psm_pval(psm_table, pval_table, color_classes)
 

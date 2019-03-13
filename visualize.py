@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pandas.plotting import register_matplotlib_converters
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
@@ -14,6 +15,8 @@ from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, av
 
 sns.set_context('paper')
 sns.set_style('white')
+
+register_matplotlib_converters()
 
 
 def _output_figure(filename):
@@ -77,7 +80,7 @@ def plot_timestamps(df, filename=None):
 
     sns.despine(left=True)
 
-    plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
+    plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
 
     return _output_figure(filename)
 
@@ -102,8 +105,8 @@ def _scatter_plot(scatter_data, df, filename=None):
 
     sns.despine(left=True, bottom=True)
 
-    plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-    plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
+    plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+    plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
 
     _add_date_color_bar(df)
 
@@ -146,8 +149,8 @@ def scatter_outliers(scatter_data, df, outlier_scores, score_threshold, filename
 
     sns.despine(left=True, bottom=True)
 
-    plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-    plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
+    plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+    plt.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
 
     _add_date_color_bar(df)
 
