@@ -5,7 +5,7 @@ Analysis of mass spectrometry proteomics quality control metrics
 
 For more information:
 
-* [Official code website](https://bitbucket.org/proteinspector/qc_analysis/)
+* [Official code website](https://github.com/bittremieux/qc_analysis)
 
 This tool analyzes the quality of mass spectrometry proteomics experiments based on their quality control metrics.
 
@@ -93,11 +93,11 @@ The result of the analysis is exported to an HTML report or an equivalent qcML f
 Dependencies
 ------------
 
-Python 3.3 or higher is required to run the software. The required external modules are available in the file `requirements.txt`.
+Python 3.3 or higher is required to run the software. Conda is recommended to create a suitable Python environment and install the dependencies:
 
-Most external requirements can be installed directly via pip, with the following exception:
-
-* [PyFIM](http://www.borgelt.net/pyfim.html) (fim): see the detailed installation instructions on the website to install.
+```
+conda env create -f environment.yml
+```
 
 Manuscript reproducibility
 --------------------------
@@ -107,4 +107,4 @@ All figures and tables presented in the manuscript can easily be reproduced. Exe
 Contact
 -------
 
-For more information you can visit the [official code website](https://bitbucket.org/proteinspector/qc_analysis/) and send a message through Bitbucket or send a mail to <wout.bittremieux@uantwerpen.be>.
+For more information you can visit the [official code website](https://github.com/bittremieux/qc_analysis) or send an email to <wout.bittremieux@uantwerpen.be>.
