@@ -20,7 +20,7 @@ import visualize
 
 def compare_outlier_psms(f_psms, outliers):
     # compare inliers and outliers based on their number of valid PSM's
-    psms = pd.read_csv(f_psms)
+    psms = pd.read_csv(f_psms, index_col=0, header=None, squeeze=True)
 
     outlier_psms = psms.filter(items=[index[0] for index in outliers.index.values])
     inlier_psms = psms.drop(outlier_psms.index)
@@ -65,7 +65,8 @@ def compare_outlier_subspace_psms(outliers, frequent_subspaces, psms, inlier_psm
 
 
 def find_optimal_outliers_k(data, f_class, k_min, dist):
-    quality_classes = pd.DataFrame({'quality': pd.read_csv(f_class)}, data.index.get_level_values(0))
+    quality_classes = pd.DataFrame({'quality': pd.read_csv(f_class, index_col=0, header=None, squeeze=True)},
+                                   data.index.get_level_values(0))
     true_classes = visualize._to_binary_class_labels(quality_classes)
     k_range = np.arange(k_min, math.ceil(len(data) / 2), dtype=int)
 
@@ -83,7 +84,8 @@ def find_optimal_outliers_k(data, f_class, k_min, dist):
 
 def validate_outlier_score(data, f_class, scores, num_bins=20):
     # merge outlier scores and manual quality assignments
-    classes_scores = pd.DataFrame({'quality': pd.read_csv(f_class), 'score': scores})
+    classes_scores = pd.DataFrame({'quality': pd.read_csv(f_class, index_col=0, header=None, squeeze=True),
+                                   'score': scores})
 
     exporter.outlier_validation(classes_scores, num_bins)
 
