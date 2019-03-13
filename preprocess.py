@@ -28,7 +28,7 @@ def preprocess(data, min_variance, min_corr, scaling_mode):
 def remove_low_variance_features(data, min_variance):
     variance_threshold = VarianceThreshold(min_variance).fit(data)
 
-    return data[np.where(variance_threshold.variances_ > min_variance)[0]], variance_threshold.variances_
+    return data.iloc[:, np.where(variance_threshold.variances_ > min_variance)[0]], variance_threshold.variances_
 
 
 def remove_correlated_features(data, min_corr):
